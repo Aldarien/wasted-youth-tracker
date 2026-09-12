@@ -15,6 +15,7 @@ use Zieren\WYT\Infrastructure\Clock\FrozenClock;
 use Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoClassRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoClassificationRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassLimitMappingRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoConfigRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoOverrideRepository;
@@ -27,6 +28,7 @@ class WastedBehaviorTest extends IntegrationTestCase
     private TimeCalculationService $timeCalculationService;
     private PdoActivityRepository $activityRepository;
     private PdoLimitRepository $limitRepository;
+    private PdoClassLimitMappingRepository $mappingRepository;
     private PdoClassRepository $classRepository;
     private PdoClassificationRepository $classificationRepository;
     private PdoConfigRepository $configRepository;
@@ -42,6 +44,7 @@ class WastedBehaviorTest extends IntegrationTestCase
         $this->classificationRepository = new PdoClassificationRepository($this->connection);
         $this->activityRepository = new PdoActivityRepository($this->connection);
         $this->limitRepository = new PdoLimitRepository($this->connection);
+        $this->mappingRepository = new PdoClassLimitMappingRepository($this->connection);
         $this->classRepository = new PdoClassRepository($this->connection);
         $this->configRepository = new PdoConfigRepository($this->connection);
         $this->overrideRepository = new PdoOverrideRepository($this->connection);
@@ -53,7 +56,7 @@ class WastedBehaviorTest extends IntegrationTestCase
         );
         $this->recordActivityService = new RecordActivityService(
             $this->clock,
-            new ClassificationService($this->classificationRepository, $this->limitRepository),
+            new ClassificationService($this->classificationRepository, $this->mappingRepository),
             $this->activityRepository,
             $userRepository,
             $this->configRepository,
@@ -62,7 +65,7 @@ class WastedBehaviorTest extends IntegrationTestCase
         $this->userService = new UserManagementService(
             $userRepository,
             $this->limitRepository,
-            $userRepository,
+            $this->mappingRepository,
             new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
 
@@ -131,7 +134,7 @@ class WastedBehaviorTest extends IntegrationTestCase
         $limitId1 = $this->limitRepository->save(new Limit(0, 'u1', 'b1'));
         $classId1 = $this->saveClass('c1');
         $this->classificationRepository->save(new Classification(0, $classId1, 0, '1$'));
-        $this->limitRepository->addMapping($classId1, $limitId1);
+        $this->mappingRepository->addMapping($classId1, $limitId1);
 
         $fromTime = $this->clock->now();
 
@@ -167,11 +170,11 @@ class WastedBehaviorTest extends IntegrationTestCase
         $this->classificationRepository->save(new Classification(0, $classId1, 0, '1$'));
         $this->classificationRepository->save(new Classification(0, $classId2, 10, '2$'));
         $this->classificationRepository->save(new Classification(0, $classId3, 20, '3$'));
-        $this->limitRepository->addMapping(1, $limitId1);
-        $this->limitRepository->addMapping($classId1, $limitId1);
-        $this->limitRepository->addMapping($classId2, $limitId2);
-        $this->limitRepository->addMapping($classId2, $limitId3);
-        $this->limitRepository->addMapping($classId3, $limitId3);
+        $this->mappingRepository->addMapping(1, $limitId1);
+        $this->mappingRepository->addMapping($classId1, $limitId1);
+        $this->mappingRepository->addMapping($classId2, $limitId2);
+        $this->mappingRepository->addMapping($classId2, $limitId3);
+        $this->mappingRepository->addMapping($classId3, $limitId3);
 
         $fromTime = $this->clock->now();
 
@@ -238,7 +241,7 @@ class WastedBehaviorTest extends IntegrationTestCase
     public function testWeeklyLimit(): void
     {
         $limitId = $this->limitRepository->save(new Limit(0, 'u1', 'b'));
-        $this->limitRepository->addMapping(1, $limitId);
+        $this->mappingRepository->addMapping(1, $limitId);
 
         $this->assertEquals(
             [$this->totalLimitId => 0, $limitId => 0],
@@ -294,7 +297,7 @@ class WastedBehaviorTest extends IntegrationTestCase
             $this->queryTimeLeftTodayAllLimitsOnlyCurrentSeconds()
         );
 
-        $this->limitRepository->addMapping($classId, $limitId1);
+        $this->mappingRepository->addMapping($classId, $limitId1);
         $this->configRepository->setLimitConfig($limitId1, 'minutes_day', '2');
 
         $classification1 = ['class_id' => $classId, 'limits' => [$this->totalLimitId, $limitId1]];
@@ -333,7 +336,7 @@ class WastedBehaviorTest extends IntegrationTestCase
         );
 
         $limitId2 = $this->limitRepository->save(new Limit(0, 'u1', 'b2'));
-        $this->limitRepository->addMapping($classId, $limitId2);
+        $this->mappingRepository->addMapping($classId, $limitId2);
         $this->configRepository->setLimitConfig($limitId2, 'minutes_day', '1');
         $this->advanceTime(1);
         $classification1['limits'][] = $limitId2;
@@ -392,7 +395,7 @@ class WastedBehaviorTest extends IntegrationTestCase
         ];
         $this->assertEquals($expected, $this->configRepository->findAllLimitConfigs('u1'));
 
-        $this->limitRepository->addMapping(1, $limitId1);
+        $this->mappingRepository->addMapping(1, $limitId1);
         $this->assertEqualsCanonicalizing(
             [['class_id' => 1, 'limits' => [$this->totalLimitId, $limitId1]]],
             $this->toArray($this->insertActivity('u1', ['foo']))
@@ -492,7 +495,7 @@ class WastedBehaviorTest extends IntegrationTestCase
     private function saveClass(string $name): int
     {
         $classId = $this->classRepository->save(new ActivityClass(0, $name));
-        $this->limitRepository->addMapping($classId, $this->totalLimitId);
+        $this->mappingRepository->addMapping($classId, $this->totalLimitId);
         return $classId;
     }
 

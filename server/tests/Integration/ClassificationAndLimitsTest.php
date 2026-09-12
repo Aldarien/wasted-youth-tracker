@@ -11,6 +11,7 @@ use Zieren\WYT\Domain\Service\ClassificationService;
 use Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoClassRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoClassificationRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassLimitMappingRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoConfigRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoOverrideRepository;
@@ -19,6 +20,7 @@ use Zieren\WYT\Infrastructure\Persistence\PdoUserRepository;
 class ClassificationAndLimitsTest extends IntegrationTestCase
 {
     private PdoLimitRepository $limitRepository;
+    private PdoClassLimitMappingRepository $mappingRepository;
     private PdoClassRepository $classRepository;
     private PdoClassificationRepository $classificationRepository;
     private UserManagementService $userService;
@@ -29,17 +31,18 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
     {
         parent::setUp();
         $this->limitRepository = new PdoLimitRepository($this->connection);
+        $this->mappingRepository = new PdoClassLimitMappingRepository($this->connection);
         $this->classRepository = new PdoClassRepository($this->connection);
         $this->classificationRepository = new PdoClassificationRepository($this->connection);
         $this->userService = new UserManagementService(
             new PdoUserRepository($this->connection),
             $this->limitRepository,
-            new PdoUserRepository($this->connection),
+            $this->mappingRepository,
             new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
         $this->classificationService = new ClassificationService(
             $this->classificationRepository,
-            $this->limitRepository
+            $this->mappingRepository
         );
         $this->totalLimitId = $this->userService->addUser('u1');
     }
@@ -52,8 +55,8 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
 
         $classId1 = $this->classRepository->save(new ActivityClass(0, 'c1'));
         $classId2 = $this->classRepository->save(new ActivityClass(0, 'c2'));
-        $this->limitRepository->addMapping($classId1, $this->totalLimitId);
-        $this->limitRepository->addMapping($classId2, $this->totalLimitId);
+        $this->mappingRepository->addMapping($classId1, $this->totalLimitId);
+        $this->mappingRepository->addMapping($classId2, $this->totalLimitId);
         $this->assertSame($classId2, $classId1 + 1);
 
         $classificationId1 = $this->classificationRepository->save(
@@ -64,7 +67,7 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
         );
         $this->assertSame($classificationId2, $classificationId1 + 1);
 
-        $this->limitRepository->addMapping($classId1, $limitId1);
+        $this->mappingRepository->addMapping($classId1, $limitId1);
 
         $result = $this->classificationService->classify('u1', ['window 0', 'window 1', 'window 2']);
         $this->assertClassificationResult($result, [
@@ -73,7 +76,7 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
             [$classId2, [$this->totalLimitId]],
         ]);
 
-        $this->limitRepository->addMapping($classId1, $limitId2);
+        $this->mappingRepository->addMapping($classId1, $limitId2);
         $result = $this->classificationService->classify('u1', ['window 0', 'window 1', 'window 2']);
         $this->assertClassificationResult($result, [
             [Defaults::DEFAULT_CLASS_ID, [$this->totalLimitId]],
@@ -81,7 +84,7 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
             [$classId2, [$this->totalLimitId]],
         ]);
 
-        $this->limitRepository->addMapping(Defaults::DEFAULT_CLASS_ID, $limitId2);
+        $this->mappingRepository->addMapping(Defaults::DEFAULT_CLASS_ID, $limitId2);
         $result = $this->classificationService->classify('u1', ['window 0', 'window 1', 'window 2']);
         $this->assertClassificationResult($result, [
             [Defaults::DEFAULT_CLASS_ID, [$this->totalLimitId, $limitId2]],
@@ -94,7 +97,7 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
             [$classId1, [$this->totalLimitId, $limitId1, $limitId2]],
         ]);
 
-        $this->limitRepository->removeMapping($classId1, $limitId1);
+        $this->mappingRepository->removeMapping($classId1, $limitId1);
         $result = $this->classificationService->classify('u1', ['window 1']);
         $this->assertClassificationResult($result, [
             [$classId1, [$this->totalLimitId, $limitId2]],
@@ -113,7 +116,7 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
         $expected[$limitId] = ['name' => 'b', 'is_total' => false];
         $this->assertEquals($expected, $all);
 
-        $this->limitRepository->addMapping(Defaults::DEFAULT_CLASS_ID, $limitId);
+        $this->mappingRepository->addMapping(Defaults::DEFAULT_CLASS_ID, $limitId);
         $all = $configRepository->findAllLimitConfigs('u1');
         $this->assertEqualsCanonicalizing($expected, $all);
 

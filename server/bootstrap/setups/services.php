@@ -52,11 +52,16 @@ return [
         create(\Zieren\WYT\Infrastructure\Persistence\PdoUserRepository::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
-    \Zieren\WYT\Domain\Repository\TotalLimitMappingRepositoryInterface::class =>
-        get(\Zieren\WYT\Domain\Repository\UserRepositoryInterface::class),
-
     \Zieren\WYT\Domain\Repository\LimitRepositoryInterface::class =>
         create(\Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository::class)
+            ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
+
+    \Zieren\WYT\Domain\Repository\ClassLimitMappingRepositoryInterface::class =>
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoClassLimitMappingRepository::class)
+            ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
+
+    \Zieren\WYT\Domain\Repository\LimitOverlapQueryInterface::class =>
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoLimitOverlapQuery::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
     \Zieren\WYT\Domain\Repository\ClassRepositoryInterface::class =>
@@ -85,7 +90,10 @@ return [
     \Zieren\WYT\Domain\Repository\ActivityQueryRepositoryInterface::class =>
         get(\Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository::class),
 
-    \Zieren\WYT\Domain\Repository\ActivityMaintenanceRepositoryInterface::class =>
+    \Zieren\WYT\Domain\Repository\ActivityPruningRepositoryInterface::class =>
+        get(\Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository::class),
+
+    \Zieren\WYT\Domain\Repository\ActivityReclassificationRepositoryInterface::class =>
         get(\Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository::class),
 
     \Zieren\WYT\Domain\Repository\TransactionManagerInterface::class =>
@@ -139,7 +147,7 @@ return [
     \Zieren\WYT\Application\Service\PruningService::class =>
         create(\Zieren\WYT\Application\Service\PruningService::class)
             ->constructor(
-                get(\Zieren\WYT\Domain\Repository\ActivityMaintenanceRepositoryInterface::class),
+                get(\Zieren\WYT\Domain\Repository\ActivityPruningRepositoryInterface::class),
                 get(\Psr\Log\LoggerInterface::class),
                 get(\Zieren\WYT\Domain\Repository\LogPruningInterface::class)
             ),

@@ -12,6 +12,7 @@ use Zieren\WYT\Domain\Service\TimeCalculationService;
 use Zieren\WYT\Infrastructure\Clock\FrozenClock;
 use Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoClassificationRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassLimitMappingRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoConfigRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoOverrideRepository;
@@ -61,7 +62,7 @@ class RxServiceIntegrationTest extends IntegrationTestCase
         $classificationRepository = new PdoClassificationRepository($this->connection);
         $classificationService = new ClassificationService(
             $classificationRepository,
-            new PdoLimitRepository($this->connection)
+            new PdoClassLimitMappingRepository($this->connection)
         );
         $activityRepository = new PdoActivityRepository($this->connection);
         $configRepository = new PdoConfigRepository($this->connection);
@@ -94,7 +95,7 @@ class RxServiceIntegrationTest extends IntegrationTestCase
         $userService = new UserManagementService(
             new PdoUserRepository($this->connection),
             new PdoLimitRepository($this->connection),
-            new PdoUserRepository($this->connection),
+            new PdoClassLimitMappingRepository($this->connection),
             new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
 

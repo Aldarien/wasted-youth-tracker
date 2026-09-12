@@ -5,7 +5,7 @@ namespace Zieren\WYT\Application\Service;
 use DateTimeImmutable;
 use Zieren\WYT\Domain\Entity\ActivityClass;
 use Zieren\WYT\Domain\Exception\CannotModifyDefaultClassException;
-use Zieren\WYT\Domain\Repository\LimitRepositoryInterface;
+use Zieren\WYT\Domain\Repository\ClassLimitMappingRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ClassRepositoryInterface;
 use Zieren\WYT\Domain\Repository\TransactionManagerInterface;
 use Zieren\WYT\Domain\Repository\UserRepositoryInterface;
@@ -17,7 +17,7 @@ class ClassManagementService
     public function __construct(
         private readonly ClassRepositoryInterface $classRepository,
         private readonly UserRepositoryInterface $userRepository,
-        private readonly LimitRepositoryInterface $limitRepository,
+        private readonly ClassLimitMappingRepositoryInterface $classLimitMappingRepository,
         private readonly TransactionManagerInterface $transactionManager,
         private readonly ActivityReclassificationService $activityReclassificationService
     ) {
@@ -27,12 +27,12 @@ class ClassManagementService
     {
         return $this->transactionManager->run(function () use ($name): int {
             $classId = $this->classRepository->save(new ActivityClass(0, $name));
-            $mappedLimitIds = $this->limitRepository->findLimitIdsByClass($classId);
+            $mappedLimitIds = $this->classLimitMappingRepository->findLimitIdsByClass($classId);
             foreach ($this->userRepository->findAll() as $user) {
                 if ($user->totalLimitId !== null
                     && !in_array($user->totalLimitId, $mappedLimitIds, true)
                 ) {
-                    $this->limitRepository->addMapping($classId, $user->totalLimitId);
+                    $this->classLimitMappingRepository->addMapping($classId, $user->totalLimitId);
                 }
             }
             return $classId;

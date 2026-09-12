@@ -7,7 +7,7 @@ use Zieren\WYT\Domain\Entity\User;
 use Zieren\WYT\Domain\Defaults;
 use Zieren\WYT\Domain\Repository\LimitRepositoryInterface;
 use Zieren\WYT\Domain\Repository\TransactionManagerInterface;
-use Zieren\WYT\Domain\Repository\TotalLimitMappingRepositoryInterface;
+use Zieren\WYT\Domain\Repository\ClassLimitMappingRepositoryInterface;
 use Zieren\WYT\Domain\Repository\UserRepositoryInterface;
 
 class UserManagementService
@@ -15,7 +15,7 @@ class UserManagementService
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
         private readonly LimitRepositoryInterface $limitRepository,
-        private readonly TotalLimitMappingRepositoryInterface $totalLimitMappingRepository,
+        private readonly ClassLimitMappingRepositoryInterface $classLimitMappingRepository,
         private readonly TransactionManagerInterface $transactionManager
     ) {
     }
@@ -28,8 +28,7 @@ class UserManagementService
                 new Limit(0, $id, Defaults::TOTAL_LIMIT_NAME)
             );
             $this->userRepository->updateTotalLimit($id, $limitId);
-            $this->limitRepository->addMapping(Defaults::DEFAULT_CLASS_ID, $limitId);
-            $this->totalLimitMappingRepository->mapAllClassesToLimit($limitId);
+            $this->classLimitMappingRepository->mapAllClassesToLimit($limitId);
             return $limitId;
         });
         return $limitId;

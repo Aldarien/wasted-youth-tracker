@@ -20,24 +20,4 @@ interface LimitRepositoryInterface
     public function findById(int $id): ?Limit;
 
     public function findTotalLimitForUser(string $userId): ?Limit;
-
-    public function addMapping(int $classId, int $limitId): void;
-
-    public function removeMapping(int $classId, int $limitId): void;
-
-    /**
-     * @return int[]
-     */
-    public function findLimitIdsByClass(int $classId): array;
-
-    /**
-     * @return int[]
-     */
-    public function findLimitIdsByClassAndUser(int $classId, string $userId): array;
-
-    /**
-     * @param string|null $dateForUnlock Restricts to limits locked on this date.
-     * @return string[]
-     */
-    public function findOverlappingLimitNames(int $limitId, ?string $dateForUnlock = null): array;
 }

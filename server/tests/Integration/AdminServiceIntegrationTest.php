@@ -23,6 +23,7 @@ use Zieren\WYT\Infrastructure\Persistence\DatabaseInitializer;
 use Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoClassRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoClassificationRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassLimitMappingRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoConfigRepository;
 use Zieren\WYT\Infrastructure\Persistence\PdoConnection;
 use Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository;
@@ -110,7 +111,7 @@ class AdminServiceIntegrationTest extends TestCase
         $this->assertSame('game', $classes[$classId]->name);
         $this->assertContains(
             $totalLimitId,
-            (new PdoLimitRepository($this->connection))->findLimitIdsByClass($classId)
+            (new PdoClassLimitMappingRepository($this->connection))->findLimitIdsByClass($classId)
         );
 
         $service->renameClass($classId, 'video');
@@ -238,11 +239,11 @@ class AdminServiceIntegrationTest extends TestCase
         $classId = $classService->addClass('game');
 
         $mappingService->addMapping($classId, $limitId);
-        $limits = (new PdoLimitRepository($this->connection))->findLimitIdsByClass($classId);
+        $limits = (new PdoClassLimitMappingRepository($this->connection))->findLimitIdsByClass($classId);
         $this->assertContains($limitId, $limits);
 
         $mappingService->removeMapping($classId, $limitId);
-        $limits = (new PdoLimitRepository($this->connection))->findLimitIdsByClass($classId);
+        $limits = (new PdoClassLimitMappingRepository($this->connection))->findLimitIdsByClass($classId);
         $this->assertNotContains($limitId, $limits);
     }
 
@@ -354,7 +355,7 @@ class AdminServiceIntegrationTest extends TestCase
             $this->clock,
             new ClassificationService(
                 new PdoClassificationRepository($this->connection),
-                new PdoLimitRepository($this->connection)
+                new PdoClassLimitMappingRepository($this->connection)
             ),
             new PdoActivityRepository($this->connection),
             new PdoUserRepository($this->connection),
@@ -393,7 +394,7 @@ class AdminServiceIntegrationTest extends TestCase
         return new ClassManagementService(
             new PdoClassRepository($this->connection),
             new PdoUserRepository($this->connection),
-            new PdoLimitRepository($this->connection),
+            new PdoClassLimitMappingRepository($this->connection),
             new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection),
             new ActivityReclassificationService(
                 new PdoActivityRepository($this->connection),
@@ -411,7 +412,10 @@ class AdminServiceIntegrationTest extends TestCase
 
     private function createMappingManagementService(): MappingManagementService
     {
-        return new MappingManagementService(new PdoLimitRepository($this->connection));
+        return new MappingManagementService(
+            new PdoClassLimitMappingRepository($this->connection),
+            new PdoUserRepository($this->connection)
+        );
     }
 
     private function createOverrideManagementService(): OverrideManagementService
@@ -419,6 +423,7 @@ class AdminServiceIntegrationTest extends TestCase
         return new OverrideManagementService(
             new PdoOverrideRepository($this->connection),
             new PdoLimitRepository($this->connection),
+            new \Zieren\WYT\Infrastructure\Persistence\PdoLimitOverlapQuery($this->connection),
             new SlotParser($this->clock)
         );
     }
@@ -428,7 +433,7 @@ class AdminServiceIntegrationTest extends TestCase
         return new UserManagementService(
             new PdoUserRepository($this->connection),
             new PdoLimitRepository($this->connection),
-            new \Zieren\WYT\Infrastructure\Persistence\PdoUserRepository($this->connection),
+            new PdoClassLimitMappingRepository($this->connection),
             new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
     }

@@ -3,10 +3,9 @@
 namespace Zieren\WYT\Infrastructure\Persistence;
 
 use Zieren\WYT\Domain\Entity\User;
-use Zieren\WYT\Domain\Repository\TotalLimitMappingRepositoryInterface;
 use Zieren\WYT\Domain\Repository\UserRepositoryInterface;
 
-class PdoUserRepository implements UserRepositoryInterface, TotalLimitMappingRepositoryInterface
+class PdoUserRepository implements UserRepositoryInterface
 {
     public function __construct(
         private readonly Connection $connection
@@ -64,15 +63,6 @@ class PdoUserRepository implements UserRepositoryInterface, TotalLimitMappingRep
     public function updateAckedError(string $id, string $ackedError): void
     {
         $this->connection->update('users', ['acked_error' => $ackedError], 'id = %s', $id);
-    }
-
-    public function mapAllClassesToLimit(int $limitId): void
-    {
-        $this->connection->rawQuery('
-            INSERT IGNORE INTO mappings (limit_id, class_id)
-            SELECT %i AS limit_id, id AS class_id FROM classes',
-            $limitId
-        );
     }
 
 }
