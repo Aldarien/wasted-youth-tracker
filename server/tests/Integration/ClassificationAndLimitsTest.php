@@ -3,11 +3,11 @@
 namespace Zieren\WYT\Tests\Integration;
 
 use Zieren\WYT\Application\Service\UserManagementService;
+use Zieren\WYT\Domain\Defaults;
 use Zieren\WYT\Domain\Entity\ActivityClass;
 use Zieren\WYT\Domain\Entity\Classification;
 use Zieren\WYT\Domain\Entity\Limit;
 use Zieren\WYT\Domain\Service\ClassificationService;
-use Zieren\WYT\Domain\Wasted;
 use Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository;
 use Zieren\WYT\Infrastructure\Persistence\MeekroClassRepository;
 use Zieren\WYT\Infrastructure\Persistence\MeekroClassificationRepository;
@@ -68,7 +68,7 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
 
         $result = $this->classificationService->classify('u1', ['window 0', 'window 1', 'window 2']);
         $this->assertClassificationResult($result, [
-            [Wasted::DEFAULT_CLASS_ID, [$this->totalLimitId]],
+            [Defaults::DEFAULT_CLASS_ID, [$this->totalLimitId]],
             [$classId1, [$this->totalLimitId, $limitId1]],
             [$classId2, [$this->totalLimitId]],
         ]);
@@ -76,15 +76,15 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
         $this->limitRepository->addMapping($classId1, $limitId2);
         $result = $this->classificationService->classify('u1', ['window 0', 'window 1', 'window 2']);
         $this->assertClassificationResult($result, [
-            [Wasted::DEFAULT_CLASS_ID, [$this->totalLimitId]],
+            [Defaults::DEFAULT_CLASS_ID, [$this->totalLimitId]],
             [$classId1, [$this->totalLimitId, $limitId1, $limitId2]],
             [$classId2, [$this->totalLimitId]],
         ]);
 
-        $this->limitRepository->addMapping(Wasted::DEFAULT_CLASS_ID, $limitId2);
+        $this->limitRepository->addMapping(Defaults::DEFAULT_CLASS_ID, $limitId2);
         $result = $this->classificationService->classify('u1', ['window 0', 'window 1', 'window 2']);
         $this->assertClassificationResult($result, [
-            [Wasted::DEFAULT_CLASS_ID, [$this->totalLimitId, $limitId2]],
+            [Defaults::DEFAULT_CLASS_ID, [$this->totalLimitId, $limitId2]],
             [$classId1, [$this->totalLimitId, $limitId1, $limitId2]],
             [$classId2, [$this->totalLimitId]],
         ]);
@@ -105,7 +105,7 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
     {
         $configRepository = new MeekroConfigRepository($this->connection);
         $all = $configRepository->findAllLimitConfigs('u1');
-        $expected = [$this->totalLimitId => ['name' => Wasted::TOTAL_LIMIT_NAME, 'is_total' => true]];
+        $expected = [$this->totalLimitId => ['name' => Defaults::TOTAL_LIMIT_NAME, 'is_total' => true]];
         $this->assertEquals($expected, $all);
 
         $limitId = $this->limitRepository->save(new Limit(0, 'u1', 'b'));
@@ -113,7 +113,7 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
         $expected[$limitId] = ['name' => 'b', 'is_total' => false];
         $this->assertEquals($expected, $all);
 
-        $this->limitRepository->addMapping(Wasted::DEFAULT_CLASS_ID, $limitId);
+        $this->limitRepository->addMapping(Defaults::DEFAULT_CLASS_ID, $limitId);
         $all = $configRepository->findAllLimitConfigs('u1');
         $this->assertEqualsCanonicalizing($expected, $all);
 

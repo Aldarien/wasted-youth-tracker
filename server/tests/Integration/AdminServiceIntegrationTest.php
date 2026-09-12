@@ -12,6 +12,7 @@ use Zieren\WYT\Application\Service\OverrideManagementService;
 use Zieren\WYT\Application\Service\PruningService;
 use Zieren\WYT\Application\Service\UserManagementService;
 use Zieren\WYT\Domain\Exception\InvalidSlotException;
+use Zieren\WYT\Domain\Defaults;
 use Zieren\WYT\Domain\Exception\CannotModifyDefaultClassException;
 use Zieren\WYT\Domain\Exception\CannotModifyDefaultClassificationException;
 use Zieren\WYT\Domain\Service\ActivityReclassificationService;
@@ -163,7 +164,7 @@ class AdminServiceIntegrationTest extends TestCase
         $service = $this->createClassManagementService();
 
         $this->expectException(CannotModifyDefaultClassException::class);
-        $service->removeClass(\Zieren\WYT\Domain\Wasted::DEFAULT_CLASS_ID);
+        $service->removeClass(Defaults::DEFAULT_CLASS_ID);
     }
 
     public function testClassificationLifecycle(): void
@@ -203,7 +204,7 @@ class AdminServiceIntegrationTest extends TestCase
             0,
             $now - 100,
             $now - 50,
-            \Zieren\WYT\Domain\Wasted::DEFAULT_CLASS_ID,
+            Defaults::DEFAULT_CLASS_ID,
             'game'
         ));
 
@@ -222,7 +223,7 @@ class AdminServiceIntegrationTest extends TestCase
         $service = $this->createClassificationManagementService();
 
         $this->expectException(CannotModifyDefaultClassificationException::class);
-        $service->removeClassification(\Zieren\WYT\Domain\Wasted::DEFAULT_CLASSIFICATION_ID);
+        $service->removeClassification(Defaults::DEFAULT_CLASSIFICATION_ID);
     }
 
     public function testMappingLifecycle(): void
@@ -345,7 +346,7 @@ class AdminServiceIntegrationTest extends TestCase
         $mappingService = $this->createMappingManagementService();
         $userService->addUser('u1');
         $limitId = $limitService->addLimit('u1', 'Games');
-        $mappingService->addMapping(\Zieren\WYT\Domain\Wasted::DEFAULT_CLASS_ID, $limitId);
+        $mappingService->addMapping(Defaults::DEFAULT_CLASS_ID, $limitId);
 
         $classId = $classService->addClass('game');
         $this->clock->advance(1);
