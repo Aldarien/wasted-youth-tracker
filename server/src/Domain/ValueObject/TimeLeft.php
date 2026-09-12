@@ -4,32 +4,41 @@ namespace Zieren\WYT\Domain\ValueObject;
 
 use Zieren\WYT\Domain\Clock;
 
-class TimeLeft
+final class TimeLeft
 {
-    private bool $locked;
-    private int $currentSeconds;
-    private int $totalSeconds;
-    private ?TimeSlot $currentSlot = null;
-    private ?TimeSlot $nextSlot = null;
-
     public function __construct(
-        bool $locked,
+        private readonly bool $locked,
         int $totalSeconds,
-        private readonly Clock $clock
-    )
-    {
-        $this->locked = $locked;
-        $this->currentSeconds = $locked ? 0 : $totalSeconds;
+        private readonly Clock $clock,
+        ?TimeSlot $currentSlot = null,
+        ?TimeSlot $nextSlot = null,
+        ?int $currentSeconds = null
+    ) {
+        $this->currentSeconds = $currentSeconds ?? ($locked ? 0 : $totalSeconds);
         $this->totalSeconds = $totalSeconds;
-    }
-
-    public function applySlots(?TimeSlot $currentSlot, int $currentSeconds, int $totalSeconds, ?TimeSlot $nextSlot): self
-    {
-        $this->currentSeconds = min($this->currentSeconds, $currentSeconds);
-        $this->totalSeconds = min($this->totalSeconds, $totalSeconds);
         $this->currentSlot = $currentSlot;
         $this->nextSlot = $nextSlot;
-        return $this;
+    }
+
+    private readonly int $currentSeconds;
+    private readonly int $totalSeconds;
+    private readonly ?TimeSlot $currentSlot;
+    private readonly ?TimeSlot $nextSlot;
+
+    public function withSlots(
+        ?TimeSlot $currentSlot,
+        int $currentSeconds,
+        int $totalSeconds,
+        ?TimeSlot $nextSlot
+    ): self {
+        return new self(
+            $this->locked,
+            min($this->totalSeconds, $totalSeconds),
+            $this->clock,
+            $currentSlot,
+            $nextSlot,
+            min($this->currentSeconds, $currentSeconds)
+        );
     }
 
     public function isLocked(): bool
@@ -76,8 +85,4 @@ class TimeLeft
         return implode(';', $response);
     }
 
-    public static function toCurrentSeconds(self $timeLeft): int
-    {
-        return $timeLeft->currentSeconds();
-    }
 }

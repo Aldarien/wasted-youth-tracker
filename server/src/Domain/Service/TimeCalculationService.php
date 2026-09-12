@@ -131,7 +131,7 @@ class TimeCalculationService
 
         if ($slotsSpec !== null) {
             $slots = $this->slotParser->parse($slotsSpec);
-            $this->applySlots($slots, $timeLeft);
+            $timeLeft = $this->applySlots($slots, $timeLeft);
         }
 
         return $timeLeft;
@@ -140,7 +140,7 @@ class TimeCalculationService
     /**
      * @param TimeSlot[] $slots
      */
-    private function applySlots(array $slots, TimeLeft $timeLeft): void
+    private function applySlots(array $slots, TimeLeft $timeLeft): TimeLeft
     {
         $ts = $this->clock->now()->getTimestamp();
         $slots[] = new TimeSlot(0, 0); // avoids next slot extraction special case
@@ -168,6 +168,6 @@ class TimeCalculationService
             $totalSeconds += $slots[$i]->to - $slots[$i]->from;
         }
 
-        $timeLeft->applySlots($currentSlot, $currentSeconds, $totalSeconds, $nextSlot);
+        return $timeLeft->withSlots($currentSlot, $currentSeconds, $totalSeconds, $nextSlot);
     }
 }
