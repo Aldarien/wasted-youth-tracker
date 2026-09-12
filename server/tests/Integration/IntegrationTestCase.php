@@ -8,7 +8,11 @@ use Zieren\WYT\Infrastructure\Persistence\Connection;
 use Zieren\WYT\Infrastructure\Persistence\DatabaseInitializer;
 use Zieren\WYT\Infrastructure\Persistence\MeekroConnection;
 
-require_once __DIR__ . '/../config_tests.php';
+$testConfig = __DIR__ . '/../config_tests.php';
+if (!is_file($testConfig)) {
+    $testConfig = __DIR__ . '/../config_tests-sample.php';
+}
+require_once $testConfig;
 
 abstract class IntegrationTestCase extends TestCase
 {

@@ -1,0 +1,48 @@
+name: Server CI
+
+on:
+  push:
+  pull_request:
+
+defaults:
+  run:
+    working-directory: server
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: wasted_test
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, mysqli
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: composer install --no-interaction --prefer-dist
+      - run: npm ci
+      - run: npm run build:assets
+      - run: vendor/bin/phpstan analyse --no-progress
+      - run: vendor/bin/phpunit
+        env:
+          DB_HOST: 127.0.0.1
+          DB_NAME: wasted_test
+          DB_USER: root
+          DB_PASS: root
