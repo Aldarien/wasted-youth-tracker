@@ -39,6 +39,7 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: npm ci
       - run: npm run build:assets
+      - run: npm run test:frontend
       - run: vendor/bin/phpstan analyse --no-progress
       - run: vendor/bin/phpunit
         env:

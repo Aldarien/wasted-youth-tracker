@@ -115,6 +115,9 @@ return [
     \Zieren\WYT\Application\Service\ConfigManagementService::class =>
         create(\Zieren\WYT\Application\Service\ConfigManagementService::class),
 
+    \Zieren\WYT\Application\Service\AdminViewService::class =>
+        create(\Zieren\WYT\Application\Service\AdminViewService::class),
+
     \Zieren\WYT\Application\Service\UserManagementService::class =>
         create(\Zieren\WYT\Application\Service\UserManagementService::class),
 

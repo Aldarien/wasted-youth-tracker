@@ -49,6 +49,138 @@
             {% endfor %}
         </ul>
 
+        <h3>Classes and classifications</h3>
+        <form method="post">
+            <input type="text" name="className" required placeholder="class name">
+            <input type="submit" name="addClass" value="Add class">
+        </form>
+        {% for class in classes %}
+            <section>
+                <h4>{{ class.name }} ({{ class.id }})</h4>
+                {% if class.id != 1 %}
+                    <form method="post">
+                        <input type="hidden" name="classId" value="{{ class.id }}">
+                        <input type="text" name="className" value="{{ class.name }}" required>
+                        <input type="submit" name="renameClass" value="Rename">
+                        <input type="submit" name="removeClass" value="Delete"
+                            onclick="return submitWithUiState(this, 'Delete class?');">
+                    </form>
+                {% endif %}
+                <ul>
+                    {% for classification in classifications[class.id] %}
+                        <li>
+                            #{{ classification.priority }} {{ classification.regex }}
+                            {% if classification.id != 1 %}
+                                <form method="post" style="display:inline">
+                                    <input type="hidden" name="classificationId" value="{{ classification.id }}">
+                                    <input type="number" name="priority" value="{{ classification.priority }}" required>
+                                    <input type="text" name="regex" value="{{ classification.regex }}" required>
+                                    <input type="submit" name="changeClassification" value="Save">
+                                    <input type="submit" name="removeClassification" value="Delete">
+                                </form>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li>No classifications configured.</li>
+                    {% endfor %}
+                </ul>
+                <form method="post">
+                    <input type="hidden" name="classId" value="{{ class.id }}">
+                    <input type="number" name="priority" required placeholder="priority">
+                    <input type="text" name="regex" required placeholder="title pattern">
+                    <input type="submit" name="addClassification" value="Add classification">
+                </form>
+                {% for mappingUser in users %}
+                    {% for mappingLimitId, mappingLimit in limits[mappingUser.id] %}
+                        <form method="post" style="display:inline">
+                            <input type="hidden" name="classId" value="{{ class.id }}">
+                            <input type="hidden" name="limitId" value="{{ mappingLimitId }}">
+                            <input type="submit" name="addMapping"
+                                value="Map {{ mappingUser.id }}: {{ mappingLimit.name }}">
+                            <input type="submit" name="removeMapping" value="Unmap">
+                        </form>
+                    {% endfor %}
+                {% endfor %}
+            </section>
+        {% else %}
+            <p>No classes configured.</p>
+        {% endfor %}
+        <form method="post">
+            <label>Reclassify activity from
+                <input type="date" name="reclassifyFrom" required>
+            </label>
+            <input type="submit" name="reclassify" value="Reclassify">
+        </form>
+
+        <h3>Limits and mappings</h3>
+        {% for user in users %}
+            <section>
+                <h4>{{ user.id }}</h4>
+                <form method="post">
+                    <input type="hidden" name="userId" value="{{ user.id }}">
+                    <input type="text" name="limitName" required placeholder="limit name">
+                    <input type="submit" name="addLimit" value="Add limit">
+                </form>
+                {% for limitId, limit in limits[user.id] %}
+                    <form method="post">
+                        <input type="hidden" name="userId" value="{{ user.id }}">
+                        <input type="hidden" name="limitId" value="{{ limitId }}">
+                        <strong>{{ limit.name }}</strong>
+                        {% if not limit.is_total %}
+                            <input type="text" name="limitName" value="{{ limit.name }}" required>
+                            <input type="submit" name="renameLimit" value="Rename">
+                            <input type="submit" name="removeLimit" value="Delete"
+                                onclick="return submitWithUiState(this, 'Delete limit?');">
+                        {% endif %}
+                    </form>
+                    <ul>
+                        {% for key, value in limit %}
+                            {% if key != 'name' and key != 'is_total' %}
+                                <li>{{ key }} = {{ value }}</li>
+                            {% endif %}
+                        {% else %}
+                            <li>No limit settings configured.</li>
+                        {% endfor %}
+                    </ul>
+                    <form method="post">
+                        <input type="hidden" name="userId" value="{{ user.id }}">
+                        <input type="hidden" name="limitId" value="{{ limitId }}">
+                        <input type="text" name="configKey" required placeholder="setting">
+                        <input type="text" name="configValue" required placeholder="value">
+                        <input type="submit" name="setLimitConfig" value="Set limit setting">
+                    </form>
+                    <form method="post">
+                        <input type="hidden" name="userId" value="{{ user.id }}">
+                        <input type="hidden" name="limitId" value="{{ limitId }}">
+                        <input type="text" name="configKey" required placeholder="setting to clear">
+                        <input type="submit" name="clearLimitConfig" value="Clear limit setting">
+                    </form>
+                    <form method="post">
+                        <input type="hidden" name="userId" value="{{ user.id }}">
+                        <input type="hidden" name="limitId" value="{{ limitId }}">
+                        <input type="date" name="overrideDate" required>
+                        <input type="number" name="minutes" min="0" placeholder="minutes">
+                        <input type="text" name="slots" placeholder="slots">
+                        <input type="submit" name="setOverrideMinutes" value="Set minutes">
+                        <input type="submit" name="setOverrideSlots" value="Set slots">
+                        <input type="submit" name="unlockOverride" value="Unlock">
+                        <input type="submit" name="clearOverrides" value="Clear">
+                    </form>
+                {% else %}
+                    <p>No limits configured.</p>
+                {% endfor %}
+            </section>
+        {% endfor %}
+
+        <h3>Global configuration</h3>
+        <ul>
+            {% for key, value in globalConfig %}
+                <li>{{ key }} = {{ value }}</li>
+            {% else %}
+                <li>No global settings configured.</li>
+            {% endfor %}
+        </ul>
+
         <h3>Manage Database</h3>
         <form method="post">
             Delete activity (of all users!) and server logs older than

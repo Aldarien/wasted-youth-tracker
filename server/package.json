@@ -2,7 +2,8 @@
   "name": "wasted-youth-tracker-assets",
   "private": true,
   "scripts": {
-    "build:assets": "node scripts/build-assets.mjs"
+    "build:assets": "node scripts/build-assets.mjs",
+    "test:frontend": "node --test tests/frontend/index.test.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"
