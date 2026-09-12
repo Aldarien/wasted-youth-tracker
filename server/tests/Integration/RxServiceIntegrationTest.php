@@ -10,12 +10,12 @@ use Zieren\WYT\Domain\Service\ClassificationService;
 use Zieren\WYT\Domain\Service\SlotParser;
 use Zieren\WYT\Domain\Service\TimeCalculationService;
 use Zieren\WYT\Infrastructure\Clock\FrozenClock;
-use Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroClassificationRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroConfigRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroLimitRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroOverrideRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroUserRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassificationRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoConfigRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoOverrideRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoUserRepository;
 
 class RxServiceIntegrationTest extends IntegrationTestCase
 {
@@ -58,15 +58,15 @@ class RxServiceIntegrationTest extends IntegrationTestCase
     {
         $slotParser = new SlotParser($clock);
         $timeCalculationService = new TimeCalculationService($clock, $slotParser);
-        $classificationRepository = new MeekroClassificationRepository($this->connection);
+        $classificationRepository = new PdoClassificationRepository($this->connection);
         $classificationService = new ClassificationService(
             $classificationRepository,
-            new MeekroLimitRepository($this->connection)
+            new PdoLimitRepository($this->connection)
         );
-        $activityRepository = new MeekroActivityRepository($this->connection);
-        $configRepository = new MeekroConfigRepository($this->connection);
-        $userRepository = new MeekroUserRepository($this->connection);
-        $limitRepository = new MeekroLimitRepository($this->connection);
+        $activityRepository = new PdoActivityRepository($this->connection);
+        $configRepository = new PdoConfigRepository($this->connection);
+        $userRepository = new PdoUserRepository($this->connection);
+        $limitRepository = new PdoLimitRepository($this->connection);
 
         $recordActivityService = new RecordActivityService(
             $clock,
@@ -74,7 +74,7 @@ class RxServiceIntegrationTest extends IntegrationTestCase
             $activityRepository,
             $userRepository,
             $configRepository,
-            new \Zieren\WYT\Infrastructure\Persistence\MeekroTransactionManager($this->connection)
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
 
         return new RxService(
@@ -84,18 +84,18 @@ class RxServiceIntegrationTest extends IntegrationTestCase
             $activityRepository,
             $configRepository,
             $limitRepository,
-            new MeekroOverrideRepository($this->connection)
+            new PdoOverrideRepository($this->connection)
         );
     }
 
     private function addUser(): void
     {
-        $configRepository = new MeekroConfigRepository($this->connection);
+        $configRepository = new PdoConfigRepository($this->connection);
         $userService = new UserManagementService(
-            new MeekroUserRepository($this->connection),
-            new MeekroLimitRepository($this->connection),
-            new MeekroUserRepository($this->connection),
-            new \Zieren\WYT\Infrastructure\Persistence\MeekroTransactionManager($this->connection)
+            new PdoUserRepository($this->connection),
+            new PdoLimitRepository($this->connection),
+            new PdoUserRepository($this->connection),
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
 
         $limitId = $userService->addUser('u1');

@@ -38,7 +38,7 @@ return [
     'db.encoding' => 'latin1',
 
     \Zieren\WYT\Infrastructure\Persistence\Connection::class =>
-        create(\Zieren\WYT\Infrastructure\Persistence\MeekroConnection::class)
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoConnection::class)
             ->constructor(
                 get(\Psr\Log\LoggerInterface::class),
                 get('db.name'),
@@ -49,47 +49,47 @@ return [
             ),
 
     \Zieren\WYT\Domain\Repository\UserRepositoryInterface::class =>
-        create(\Zieren\WYT\Infrastructure\Persistence\MeekroUserRepository::class)
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoUserRepository::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
     \Zieren\WYT\Domain\Repository\TotalLimitMappingRepositoryInterface::class =>
         get(\Zieren\WYT\Domain\Repository\UserRepositoryInterface::class),
 
     \Zieren\WYT\Domain\Repository\LimitRepositoryInterface::class =>
-        create(\Zieren\WYT\Infrastructure\Persistence\MeekroLimitRepository::class)
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
     \Zieren\WYT\Domain\Repository\ClassRepositoryInterface::class =>
-        create(\Zieren\WYT\Infrastructure\Persistence\MeekroClassRepository::class)
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoClassRepository::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
     \Zieren\WYT\Domain\Repository\ClassificationRepositoryInterface::class =>
-        create(\Zieren\WYT\Infrastructure\Persistence\MeekroClassificationRepository::class)
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoClassificationRepository::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
     \Zieren\WYT\Domain\Repository\ConfigRepositoryInterface::class =>
-        create(\Zieren\WYT\Infrastructure\Persistence\MeekroConfigRepository::class)
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoConfigRepository::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
     \Zieren\WYT\Domain\Repository\OverrideRepositoryInterface::class =>
-        create(\Zieren\WYT\Infrastructure\Persistence\MeekroOverrideRepository::class)
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoOverrideRepository::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
-    \Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository::class =>
-        create(\Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository::class)
+    \Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository::class =>
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
     \Zieren\WYT\Domain\Repository\ActivityRecordRepositoryInterface::class =>
-        get(\Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository::class),
+        get(\Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository::class),
 
     \Zieren\WYT\Domain\Repository\ActivityQueryRepositoryInterface::class =>
-        get(\Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository::class),
+        get(\Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository::class),
 
     \Zieren\WYT\Domain\Repository\ActivityMaintenanceRepositoryInterface::class =>
-        get(\Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository::class),
+        get(\Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository::class),
 
     \Zieren\WYT\Domain\Repository\TransactionManagerInterface::class =>
-        create(\Zieren\WYT\Infrastructure\Persistence\MeekroTransactionManager::class)
+        create(\Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager::class)
             ->constructor(get(\Zieren\WYT\Infrastructure\Persistence\Connection::class)),
 
     \Zieren\WYT\Domain\Repository\LogPruningInterface::class =>

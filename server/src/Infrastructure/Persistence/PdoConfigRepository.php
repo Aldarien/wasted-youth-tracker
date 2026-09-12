@@ -4,7 +4,7 @@ namespace Zieren\WYT\Infrastructure\Persistence;
 
 use Zieren\WYT\Domain\Repository\ConfigRepositoryInterface;
 
-class MeekroConfigRepository implements ConfigRepositoryInterface
+class PdoConfigRepository implements ConfigRepositoryInterface
 {
     public function __construct(
         private readonly Connection $connection

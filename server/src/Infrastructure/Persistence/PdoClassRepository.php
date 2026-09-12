@@ -5,7 +5,7 @@ namespace Zieren\WYT\Infrastructure\Persistence;
 use Zieren\WYT\Domain\Entity\ActivityClass;
 use Zieren\WYT\Domain\Repository\ClassRepositoryInterface;
 
-class MeekroClassRepository implements ClassRepositoryInterface
+class PdoClassRepository implements ClassRepositoryInterface
 {
     public function __construct(
         private readonly Connection $connection

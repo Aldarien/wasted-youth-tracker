@@ -8,7 +8,7 @@ use Zieren\WYT\Domain\Repository\ActivityMaintenanceRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ActivityQueryRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ActivityRecordRepositoryInterface;
 
-class MeekroActivityRepository implements
+class PdoActivityRepository implements
     ActivityRecordRepositoryInterface,
     ActivityQueryRepositoryInterface,
     ActivityMaintenanceRepositoryInterface

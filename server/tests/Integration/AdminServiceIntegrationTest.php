@@ -20,18 +20,18 @@ use Zieren\WYT\Domain\Service\ClassificationService;
 use Zieren\WYT\Domain\Service\SlotParser;
 use Zieren\WYT\Infrastructure\Clock\FrozenClock;
 use Zieren\WYT\Infrastructure\Persistence\DatabaseInitializer;
-use Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroClassRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroClassificationRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroConfigRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroConnection;
-use Zieren\WYT\Infrastructure\Persistence\MeekroLimitRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroOverrideRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroUserRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassificationRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoConfigRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoConnection;
+use Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoOverrideRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoUserRepository;
 
 class AdminServiceIntegrationTest extends TestCase
 {
-    private MeekroConnection $connection;
+    private PdoConnection $connection;
     private FrozenClock $clock;
 
     protected function setUp(): void
@@ -39,7 +39,7 @@ class AdminServiceIntegrationTest extends TestCase
         parent::setUp();
 
         $logger = new \Psr\Log\NullLogger();
-        $this->connection = new MeekroConnection(
+        $this->connection = new PdoConnection(
             $logger,
             TEST_DB_NAME,
             TEST_DB_USER,
@@ -69,18 +69,18 @@ class AdminServiceIntegrationTest extends TestCase
         $limitId = $service->addLimit('u1', 'Games');
         $this->assertGreaterThan(0, $limitId);
 
-        $limits = (new MeekroLimitRepository($this->connection))->findByUser('u1');
+        $limits = (new PdoLimitRepository($this->connection))->findByUser('u1');
         $this->assertCount(2, $limits);
-        $limitById = (new MeekroLimitRepository($this->connection))->findById($limitId);
+        $limitById = (new PdoLimitRepository($this->connection))->findById($limitId);
         $this->assertNotNull($limitById);
         $this->assertSame('Games', $limitById->name);
 
         $service->renameLimit('u1', $limitId, 'Videos');
-        $limitById = (new MeekroLimitRepository($this->connection))->findById($limitId);
+        $limitById = (new PdoLimitRepository($this->connection))->findById($limitId);
         $this->assertSame('Videos', $limitById->name);
 
         $service->removeLimit('u1', $limitId);
-        $limits = (new MeekroLimitRepository($this->connection))->findByUser('u1');
+        $limits = (new PdoLimitRepository($this->connection))->findByUser('u1');
         $this->assertCount(1, $limits);
     }
 
@@ -93,7 +93,7 @@ class AdminServiceIntegrationTest extends TestCase
         $service->renameLimit('u1', $totalId, 'Hacked');
         $service->removeLimit('u1', $totalId);
 
-        $limit = (new MeekroLimitRepository($this->connection))->findById($totalId);
+        $limit = (new PdoLimitRepository($this->connection))->findById($totalId);
         $this->assertNotNull($limit);
         $this->assertSame('Total', $limit->name);
     }
@@ -101,7 +101,7 @@ class AdminServiceIntegrationTest extends TestCase
     public function testClassLifecycle(): void
     {
         $service = $this->createClassManagementService();
-        $classRepository = new MeekroClassRepository($this->connection);
+        $classRepository = new PdoClassRepository($this->connection);
         $totalLimitId = $this->createUserManagementService()->addUser('u1');
 
         $classId = $service->addClass('game');
@@ -110,7 +110,7 @@ class AdminServiceIntegrationTest extends TestCase
         $this->assertSame('game', $classes[$classId]->name);
         $this->assertContains(
             $totalLimitId,
-            (new MeekroLimitRepository($this->connection))->findLimitIdsByClass($classId)
+            (new PdoLimitRepository($this->connection))->findLimitIdsByClass($classId)
         );
 
         $service->renameClass($classId, 'video');
@@ -170,7 +170,7 @@ class AdminServiceIntegrationTest extends TestCase
     public function testClassificationLifecycle(): void
     {
         $service = $this->createClassificationManagementService();
-        $classificationRepository = new MeekroClassificationRepository($this->connection);
+        $classificationRepository = new PdoClassificationRepository($this->connection);
 
         $classId = $this->createClassManagementService()->addClass('game');
         $classificationId = $service->addClassification($classId, 10, 'foo$');
@@ -199,7 +199,7 @@ class AdminServiceIntegrationTest extends TestCase
         $classificationService->addClassification($classId, 10, 'game$');
 
         $now = $this->clock->now()->getTimestamp();
-        (new MeekroActivityRepository($this->connection))->save(new \Zieren\WYT\Domain\Entity\ActivityRecord(
+        (new PdoActivityRepository($this->connection))->save(new \Zieren\WYT\Domain\Entity\ActivityRecord(
             'u1',
             0,
             $now - 100,
@@ -238,11 +238,11 @@ class AdminServiceIntegrationTest extends TestCase
         $classId = $classService->addClass('game');
 
         $mappingService->addMapping($classId, $limitId);
-        $limits = (new MeekroLimitRepository($this->connection))->findLimitIdsByClass($classId);
+        $limits = (new PdoLimitRepository($this->connection))->findLimitIdsByClass($classId);
         $this->assertContains($limitId, $limits);
 
         $mappingService->removeMapping($classId, $limitId);
-        $limits = (new MeekroLimitRepository($this->connection))->findLimitIdsByClass($classId);
+        $limits = (new PdoLimitRepository($this->connection))->findLimitIdsByClass($classId);
         $this->assertNotContains($limitId, $limits);
     }
 
@@ -254,11 +254,11 @@ class AdminServiceIntegrationTest extends TestCase
         $limitId = $service->addLimit('u1', 'Games');
 
         $service->setLimitConfig('u1', $limitId, 'times', '10:00-12:00,14:00-16:00');
-        $config = (new MeekroConfigRepository($this->connection))->getLimitConfig($limitId);
+        $config = (new PdoConfigRepository($this->connection))->getLimitConfig($limitId);
         $this->assertSame('10:00-12:00,14:00-16:00', $config['times']);
 
         $service->clearLimitConfig('u1', $limitId, 'times');
-        $config = (new MeekroConfigRepository($this->connection))->getLimitConfig($limitId);
+        $config = (new PdoConfigRepository($this->connection))->getLimitConfig($limitId);
         $this->assertArrayNotHasKey('times', $config);
     }
 
@@ -270,7 +270,7 @@ class AdminServiceIntegrationTest extends TestCase
         $service->setGlobalConfig('theme', 'dark');
         $service->setUserConfig('u1', 'theme', 'light');
 
-        $configRepository = new MeekroConfigRepository($this->connection);
+        $configRepository = new PdoConfigRepository($this->connection);
         $this->assertSame(['theme' => 'dark'], $configRepository->getGlobalConfig());
         $this->assertSame(['theme' => 'light'], $configRepository->getUserConfig('u1'));
 
@@ -308,11 +308,11 @@ class AdminServiceIntegrationTest extends TestCase
         $further = $overrideService->setMinutes('u1', $date, $limitId, 60);
         $this->assertSame([], $further);
 
-        $overrides = (new MeekroOverrideRepository($this->connection))->findByUserForDate('u1', $date);
+        $overrides = (new PdoOverrideRepository($this->connection))->findByUserForDate('u1', $date);
         $this->assertSame(60, $overrides[$limitId]['minutes']);
 
         $overrideService->clearOverrides('u1', $date, $limitId);
-        $overrides = (new MeekroOverrideRepository($this->connection))->findByUserForDate('u1', $date);
+        $overrides = (new PdoOverrideRepository($this->connection))->findByUserForDate('u1', $date);
         $this->assertArrayNotHasKey($limitId, $overrides);
     }
 
@@ -353,19 +353,19 @@ class AdminServiceIntegrationTest extends TestCase
         $recordService = new \Zieren\WYT\Application\Service\RecordActivityService(
             $this->clock,
             new ClassificationService(
-                new MeekroClassificationRepository($this->connection),
-                new MeekroLimitRepository($this->connection)
+                new PdoClassificationRepository($this->connection),
+                new PdoLimitRepository($this->connection)
             ),
-            new MeekroActivityRepository($this->connection),
-            new MeekroUserRepository($this->connection),
-            new MeekroConfigRepository($this->connection),
-            new \Zieren\WYT\Infrastructure\Persistence\MeekroTransactionManager($this->connection)
+            new PdoActivityRepository($this->connection),
+            new PdoUserRepository($this->connection),
+            new PdoConfigRepository($this->connection),
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
         $recordService->execute('u1', '', ['title']);
         $this->assertCount(1, $this->connection->query('SELECT * FROM activity'));
 
         $pruneService = new PruningService(
-            new MeekroActivityRepository($this->connection),
+            new PdoActivityRepository($this->connection),
             new \Psr\Log\NullLogger(),
             new \Zieren\WYT\Infrastructure\Logging\LogPruner(new \Psr\Log\NullLogger())
         );
@@ -376,28 +376,28 @@ class AdminServiceIntegrationTest extends TestCase
     private function createLimitManagementService(): LimitManagementService
     {
         return new LimitManagementService(
-            new MeekroLimitRepository($this->connection),
-            new MeekroUserRepository($this->connection),
-            new MeekroConfigRepository($this->connection),
+            new PdoLimitRepository($this->connection),
+            new PdoUserRepository($this->connection),
+            new PdoConfigRepository($this->connection),
             new SlotParser($this->clock)
         );
     }
 
     private function createConfigManagementService(): ConfigManagementService
     {
-        return new ConfigManagementService(new MeekroConfigRepository($this->connection));
+        return new ConfigManagementService(new PdoConfigRepository($this->connection));
     }
 
     private function createClassManagementService(): ClassManagementService
     {
         return new ClassManagementService(
-            new MeekroClassRepository($this->connection),
-            new MeekroUserRepository($this->connection),
-            new MeekroLimitRepository($this->connection),
-            new \Zieren\WYT\Infrastructure\Persistence\MeekroTransactionManager($this->connection),
+            new PdoClassRepository($this->connection),
+            new PdoUserRepository($this->connection),
+            new PdoLimitRepository($this->connection),
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection),
             new ActivityReclassificationService(
-                new MeekroActivityRepository($this->connection),
-                new MeekroClassificationRepository($this->connection)
+                new PdoActivityRepository($this->connection),
+                new PdoClassificationRepository($this->connection)
             )
         );
     }
@@ -405,20 +405,20 @@ class AdminServiceIntegrationTest extends TestCase
     private function createClassificationManagementService(): ClassificationManagementService
     {
         return new ClassificationManagementService(
-            new MeekroClassificationRepository($this->connection)
+            new PdoClassificationRepository($this->connection)
         );
     }
 
     private function createMappingManagementService(): MappingManagementService
     {
-        return new MappingManagementService(new MeekroLimitRepository($this->connection));
+        return new MappingManagementService(new PdoLimitRepository($this->connection));
     }
 
     private function createOverrideManagementService(): OverrideManagementService
     {
         return new OverrideManagementService(
-            new MeekroOverrideRepository($this->connection),
-            new MeekroLimitRepository($this->connection),
+            new PdoOverrideRepository($this->connection),
+            new PdoLimitRepository($this->connection),
             new SlotParser($this->clock)
         );
     }
@@ -426,10 +426,10 @@ class AdminServiceIntegrationTest extends TestCase
     private function createUserManagementService(): UserManagementService
     {
         return new UserManagementService(
-            new MeekroUserRepository($this->connection),
-            new MeekroLimitRepository($this->connection),
-            new \Zieren\WYT\Infrastructure\Persistence\MeekroUserRepository($this->connection),
-            new \Zieren\WYT\Infrastructure\Persistence\MeekroTransactionManager($this->connection)
+            new PdoUserRepository($this->connection),
+            new PdoLimitRepository($this->connection),
+            new \Zieren\WYT\Infrastructure\Persistence\PdoUserRepository($this->connection),
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
     }
 }

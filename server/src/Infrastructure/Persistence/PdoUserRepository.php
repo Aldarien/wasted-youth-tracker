@@ -6,7 +6,7 @@ use Zieren\WYT\Domain\Entity\User;
 use Zieren\WYT\Domain\Repository\TotalLimitMappingRepositoryInterface;
 use Zieren\WYT\Domain\Repository\UserRepositoryInterface;
 
-class MeekroUserRepository implements UserRepositoryInterface, TotalLimitMappingRepositoryInterface
+class PdoUserRepository implements UserRepositoryInterface, TotalLimitMappingRepositoryInterface
 {
     public function __construct(
         private readonly Connection $connection

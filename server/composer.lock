@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e81f6ffc8d2769961bdc6d30a7db5322",
+    "content-hash": "62256abe3f35b6283b481d0ce7a890b8",
     "packages": [
         {
             "name": "laravel/serializable-closure",
@@ -859,54 +859,6 @@
                 "source": "https://github.com/php-fig/log/tree/3.0.2"
             },
             "time": "2024-09-11T13:17:53+00:00"
-        },
-        {
-            "name": "sergeytsalkov/meekrodb",
-            "version": "v2.5.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/SergeyTsalkov/meekrodb.git",
-                "reference": "bf0865b9641ecb9885c99273bad1b764795b3336"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/SergeyTsalkov/meekrodb/zipball/bf0865b9641ecb9885c99273bad1b764795b3336",
-                "reference": "bf0865b9641ecb9885c99273bad1b764795b3336",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0"
-            },
-            "type": "library",
-            "autoload": {
-                "classmap": [
-                    "db.class.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "LGPL-3.0"
-            ],
-            "authors": [
-                {
-                    "name": "Sergey Tsalkov",
-                    "email": "stsalkov@gmail.com"
-                }
-            ],
-            "description": "The Simple PHP/MySQL Library",
-            "homepage": "http://www.meekro.com",
-            "keywords": [
-                "database",
-                "mysql",
-                "mysqli",
-                "pdo"
-            ],
-            "support": {
-                "email": "support@meekro.com",
-                "issues": "https://github.com/SergeyTsalkov/meekrodb/issues",
-                "source": "https://github.com/SergeyTsalkov/meekrodb/tree/v2.5.2"
-            },
-            "time": "2026-01-27T03:25:48+00:00"
         },
         {
             "name": "slim/slim",

@@ -5,7 +5,7 @@ namespace Zieren\WYT\Infrastructure\Persistence;
 use Zieren\WYT\Domain\Entity\Classification;
 use Zieren\WYT\Domain\Repository\ClassificationRepositoryInterface;
 
-class MeekroClassificationRepository implements ClassificationRepositoryInterface
+class PdoClassificationRepository implements ClassificationRepositoryInterface
 {
     public function __construct(
         private readonly Connection $connection

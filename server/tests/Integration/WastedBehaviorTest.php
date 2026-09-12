@@ -12,25 +12,25 @@ use Zieren\WYT\Domain\Service\ActivityReclassificationService;
 use Zieren\WYT\Domain\Service\SlotParser;
 use Zieren\WYT\Domain\Service\TimeCalculationService;
 use Zieren\WYT\Infrastructure\Clock\FrozenClock;
-use Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroClassRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroClassificationRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroConfigRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroLimitRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroOverrideRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroUserRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassificationRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoConfigRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoOverrideRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoUserRepository;
 
 class WastedBehaviorTest extends IntegrationTestCase
 {
     private FrozenClock $clock;
     private RecordActivityService $recordActivityService;
     private TimeCalculationService $timeCalculationService;
-    private MeekroActivityRepository $activityRepository;
-    private MeekroLimitRepository $limitRepository;
-    private MeekroClassRepository $classRepository;
-    private MeekroClassificationRepository $classificationRepository;
-    private MeekroConfigRepository $configRepository;
-    private MeekroOverrideRepository $overrideRepository;
+    private PdoActivityRepository $activityRepository;
+    private PdoLimitRepository $limitRepository;
+    private PdoClassRepository $classRepository;
+    private PdoClassificationRepository $classificationRepository;
+    private PdoConfigRepository $configRepository;
+    private PdoOverrideRepository $overrideRepository;
     private UserManagementService $userService;
 
     private int $totalLimitId;
@@ -39,13 +39,13 @@ class WastedBehaviorTest extends IntegrationTestCase
     {
         parent::setUp();
         $this->clock = new FrozenClock(new \DateTimeImmutable('@1000'));
-        $this->classificationRepository = new MeekroClassificationRepository($this->connection);
-        $this->activityRepository = new MeekroActivityRepository($this->connection);
-        $this->limitRepository = new MeekroLimitRepository($this->connection);
-        $this->classRepository = new MeekroClassRepository($this->connection);
-        $this->configRepository = new MeekroConfigRepository($this->connection);
-        $this->overrideRepository = new MeekroOverrideRepository($this->connection);
-        $userRepository = new MeekroUserRepository($this->connection);
+        $this->classificationRepository = new PdoClassificationRepository($this->connection);
+        $this->activityRepository = new PdoActivityRepository($this->connection);
+        $this->limitRepository = new PdoLimitRepository($this->connection);
+        $this->classRepository = new PdoClassRepository($this->connection);
+        $this->configRepository = new PdoConfigRepository($this->connection);
+        $this->overrideRepository = new PdoOverrideRepository($this->connection);
+        $userRepository = new PdoUserRepository($this->connection);
 
         $this->timeCalculationService = new TimeCalculationService(
             $this->clock,
@@ -57,13 +57,13 @@ class WastedBehaviorTest extends IntegrationTestCase
             $this->activityRepository,
             $userRepository,
             $this->configRepository,
-            new \Zieren\WYT\Infrastructure\Persistence\MeekroTransactionManager($this->connection)
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
         $this->userService = new UserManagementService(
             $userRepository,
             $this->limitRepository,
             $userRepository,
-            new \Zieren\WYT\Infrastructure\Persistence\MeekroTransactionManager($this->connection)
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
 
         $this->totalLimitId = $this->userService->addUser('u1');

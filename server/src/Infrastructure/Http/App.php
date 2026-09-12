@@ -51,8 +51,8 @@ class App extends SlimApp
         if (version_compare(PHP_VERSION, self::MIN_PHP_VERSION) < 0) {
             $unmet[] = 'PHP version '.self::MIN_PHP_VERSION.' is required, but this is '.PHP_VERSION.'.';
         }
-        if (!function_exists('mysqli_connect')) {
-            $unmet[] = 'The mysqli extension is missing.';
+        if (!class_exists(\PDO::class) || !in_array('mysql', \PDO::getAvailableDrivers(), true)) {
+            $unmet[] = 'The PDO MySQL driver is missing.';
         }
         if (!(getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ''))) {
             $unmet[] = 'The DB_NAME environment variable is missing.';

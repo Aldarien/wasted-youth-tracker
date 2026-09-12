@@ -4,7 +4,7 @@ namespace Zieren\WYT\Infrastructure\Persistence;
 
 use Zieren\WYT\Domain\Repository\TransactionManagerInterface;
 
-class MeekroTransactionManager implements TransactionManagerInterface
+class PdoTransactionManager implements TransactionManagerInterface
 {
     public function __construct(
         private readonly Connection $connection

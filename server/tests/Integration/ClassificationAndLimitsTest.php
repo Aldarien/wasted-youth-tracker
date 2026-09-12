@@ -8,19 +8,19 @@ use Zieren\WYT\Domain\Entity\ActivityClass;
 use Zieren\WYT\Domain\Entity\Classification;
 use Zieren\WYT\Domain\Entity\Limit;
 use Zieren\WYT\Domain\Service\ClassificationService;
-use Zieren\WYT\Infrastructure\Persistence\MeekroActivityRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroClassRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroClassificationRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroConfigRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroLimitRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroOverrideRepository;
-use Zieren\WYT\Infrastructure\Persistence\MeekroUserRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoActivityRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoClassificationRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoConfigRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoLimitRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoOverrideRepository;
+use Zieren\WYT\Infrastructure\Persistence\PdoUserRepository;
 
 class ClassificationAndLimitsTest extends IntegrationTestCase
 {
-    private MeekroLimitRepository $limitRepository;
-    private MeekroClassRepository $classRepository;
-    private MeekroClassificationRepository $classificationRepository;
+    private PdoLimitRepository $limitRepository;
+    private PdoClassRepository $classRepository;
+    private PdoClassificationRepository $classificationRepository;
     private UserManagementService $userService;
     private ClassificationService $classificationService;
     private int $totalLimitId;
@@ -28,14 +28,14 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->limitRepository = new MeekroLimitRepository($this->connection);
-        $this->classRepository = new MeekroClassRepository($this->connection);
-        $this->classificationRepository = new MeekroClassificationRepository($this->connection);
+        $this->limitRepository = new PdoLimitRepository($this->connection);
+        $this->classRepository = new PdoClassRepository($this->connection);
+        $this->classificationRepository = new PdoClassificationRepository($this->connection);
         $this->userService = new UserManagementService(
-            new MeekroUserRepository($this->connection),
+            new PdoUserRepository($this->connection),
             $this->limitRepository,
-            new MeekroUserRepository($this->connection),
-            new \Zieren\WYT\Infrastructure\Persistence\MeekroTransactionManager($this->connection)
+            new PdoUserRepository($this->connection),
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
         $this->classificationService = new ClassificationService(
             $this->classificationRepository,
@@ -103,7 +103,7 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
 
     public function testGetAllLimitConfigs(): void
     {
-        $configRepository = new MeekroConfigRepository($this->connection);
+        $configRepository = new PdoConfigRepository($this->connection);
         $all = $configRepository->findAllLimitConfigs('u1');
         $expected = [$this->totalLimitId => ['name' => Defaults::TOTAL_LIMIT_NAME, 'is_total' => true]];
         $this->assertEquals($expected, $all);

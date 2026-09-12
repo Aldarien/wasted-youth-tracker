@@ -5,7 +5,7 @@ namespace Zieren\WYT\Infrastructure\Persistence;
 use Zieren\WYT\Domain\Entity\Limit;
 use Zieren\WYT\Domain\Repository\LimitRepositoryInterface;
 
-class MeekroLimitRepository implements LimitRepositoryInterface
+class PdoLimitRepository implements LimitRepositoryInterface
 {
     public function __construct(
         private readonly Connection $connection

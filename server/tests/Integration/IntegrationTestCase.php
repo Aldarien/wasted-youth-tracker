@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use Zieren\WYT\Infrastructure\Persistence\Connection;
 use Zieren\WYT\Infrastructure\Persistence\DatabaseInitializer;
-use Zieren\WYT\Infrastructure\Persistence\MeekroConnection;
+use Zieren\WYT\Infrastructure\Persistence\PdoConnection;
 
 $testConfig = __DIR__ . '/../config_tests.php';
 if (!is_file($testConfig)) {
@@ -21,7 +21,7 @@ abstract class IntegrationTestCase extends TestCase
 
     protected function setUp(): void
     {
-        $this->connection = new MeekroConnection(
+        $this->connection = new PdoConnection(
             new NullLogger(),
             TEST_DB_NAME,
             TEST_DB_USER,

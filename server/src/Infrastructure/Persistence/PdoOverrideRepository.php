@@ -4,7 +4,7 @@ namespace Zieren\WYT\Infrastructure\Persistence;
 
 use Zieren\WYT\Domain\Repository\OverrideRepositoryInterface;
 
-class MeekroOverrideRepository implements OverrideRepositoryInterface
+class PdoOverrideRepository implements OverrideRepositoryInterface
 {
     public function __construct(
         private readonly Connection $connection
