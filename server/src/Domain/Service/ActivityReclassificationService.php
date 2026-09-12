@@ -4,13 +4,13 @@ namespace Zieren\WYT\Domain\Service;
 
 use DateTimeImmutable;
 use Zieren\WYT\Domain\Defaults;
-use Zieren\WYT\Domain\Repository\ActivityMaintenanceRepositoryInterface;
+use Zieren\WYT\Domain\Repository\ActivityReclassificationRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ClassificationRepositoryInterface;
 
 class ActivityReclassificationService
 {
     public function __construct(
-        private readonly ActivityMaintenanceRepositoryInterface $activityRepository,
+        private readonly ActivityReclassificationRepositoryInterface $activityRepository,
         private readonly ClassificationRepositoryInterface $classificationRepository
     ) {
     }

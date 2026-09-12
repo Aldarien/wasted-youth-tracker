@@ -4,10 +4,8 @@ namespace Zieren\WYT\Domain\Repository;
 
 use DateTimeImmutable;
 
-interface ActivityMaintenanceRepositoryInterface
+interface ActivityReclassificationRepositoryInterface
 {
-    public function prune(DateTimeImmutable $before): void;
-
     /**
      * @return string[]
      */

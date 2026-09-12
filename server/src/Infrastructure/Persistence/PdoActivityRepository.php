@@ -4,14 +4,16 @@ namespace Zieren\WYT\Infrastructure\Persistence;
 
 use DateTimeImmutable;
 use Zieren\WYT\Domain\Entity\ActivityRecord;
-use Zieren\WYT\Domain\Repository\ActivityMaintenanceRepositoryInterface;
+use Zieren\WYT\Domain\Repository\ActivityPruningRepositoryInterface;
+use Zieren\WYT\Domain\Repository\ActivityReclassificationRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ActivityQueryRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ActivityRecordRepositoryInterface;
 
 class PdoActivityRepository implements
     ActivityRecordRepositoryInterface,
     ActivityQueryRepositoryInterface,
-    ActivityMaintenanceRepositoryInterface
+    ActivityPruningRepositoryInterface,
+    ActivityReclassificationRepositoryInterface
 {
     public function __construct(
         private readonly Connection $connection

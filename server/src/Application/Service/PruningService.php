@@ -4,13 +4,13 @@ namespace Zieren\WYT\Application\Service;
 
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
-use Zieren\WYT\Domain\Repository\ActivityMaintenanceRepositoryInterface;
+use Zieren\WYT\Domain\Repository\ActivityPruningRepositoryInterface;
 use Zieren\WYT\Domain\Repository\LogPruningInterface;
 
 class PruningService
 {
     public function __construct(
-        private readonly ActivityMaintenanceRepositoryInterface $activityRepository,
+        private readonly ActivityPruningRepositoryInterface $activityRepository,
         private readonly LoggerInterface $logger,
         private readonly LogPruningInterface $logPruner
     ) {
