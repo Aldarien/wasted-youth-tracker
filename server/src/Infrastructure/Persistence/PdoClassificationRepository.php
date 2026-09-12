@@ -94,6 +94,23 @@ class PdoClassificationRepository implements ClassificationRepositoryInterface
         return $result;
     }
 
+    public function findAllGroupedByClassId(): array
+    {
+        $rows = $this->connection->query(
+            'SELECT id, class_id, priority, re FROM classification ORDER BY class_id, priority DESC'
+        );
+        $result = [];
+        foreach ($rows as $row) {
+            $result[(int) $row['class_id']][] = new Classification(
+                (int) $row['id'],
+                (int) $row['class_id'],
+                (int) $row['priority'],
+                $row['re']
+            );
+        }
+        return $result;
+    }
+
     private function validateRegex(string $regex): void
     {
         $this->connection->query("SELECT 'test' REGEXP %s", $regex);

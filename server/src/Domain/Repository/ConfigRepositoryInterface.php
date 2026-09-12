@@ -31,4 +31,15 @@ interface ConfigRepositoryInterface
      * @return array<int, array<string, mixed>>
      */
     public function findAllLimitConfigs(string $userId): array;
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    public function findAllUserConfigs(): array;
+
+    /**
+     * @param string[] $userIds
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    public function findAllLimitConfigsForUsers(array $userIds): array;
 }

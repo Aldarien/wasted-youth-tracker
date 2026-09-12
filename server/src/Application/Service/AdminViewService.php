@@ -2,6 +2,7 @@
 
 namespace Zieren\WYT\Application\Service;
 
+use Zieren\WYT\Domain\Entity\User;
 use Zieren\WYT\Domain\Repository\ClassRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ClassificationRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ConfigRepositoryInterface;
@@ -31,17 +32,10 @@ class AdminViewService
     {
         $users = $this->userRepository->findAll();
         $classes = $this->classRepository->findAll();
-        $classifications = [];
-        foreach ($classes as $class) {
-            $classifications[$class->id] = $this->classificationRepository->findByClassId($class->id);
-        }
-
-        $userConfig = [];
-        $limits = [];
-        foreach ($users as $user) {
-            $userConfig[$user->id] = $this->configRepository->getUserConfig($user->id);
-            $limits[$user->id] = $this->configRepository->findAllLimitConfigs($user->id);
-        }
+        $classifications = $this->classificationRepository->findAllGroupedByClassId();
+        $userIds = array_map(fn (User $user): string => $user->id, $users);
+        $userConfig = $this->configRepository->findAllUserConfigs();
+        $limits = $this->configRepository->findAllLimitConfigsForUsers($userIds);
 
         return [
             'users' => $users,

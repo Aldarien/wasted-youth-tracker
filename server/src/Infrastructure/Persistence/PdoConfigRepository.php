@@ -102,6 +102,50 @@ class PdoConfigRepository implements ConfigRepositoryInterface
         return $configs;
     }
 
+    public function findAllUserConfigs(): array
+    {
+        $rows = $this->connection->query('SELECT user, k, v FROM user_config ORDER BY user, k');
+        $configs = [];
+        foreach ($rows as $row) {
+            $configs[$row['user']][$row['k']] = $row['v'];
+        }
+        return $configs;
+    }
+
+    public function findAllLimitConfigsForUsers(array $userIds): array
+    {
+        if (!$userIds) {
+            return [];
+        }
+        $rows = $this->connection->query('
+            SELECT limits.user, limits.id, limits.name, k, v, total_limit_id
+              FROM limit_config
+              RIGHT JOIN limits ON limit_config.limit_id = limits.id
+              LEFT JOIN users ON users.total_limit_id = limits.id
+              WHERE limits.user IN %ls
+              ORDER BY limits.user, limits.id, k',
+            $userIds
+        );
+        $configs = [];
+        foreach ($rows as $row) {
+            $userId = $row['user'];
+            $limitId = (int) $row['id'];
+            if (!isset($configs[$userId][$limitId])) {
+                $configs[$userId][$limitId] = [
+                    'name' => $row['name'],
+                    'is_total' => $row['total_limit_id'] !== null,
+                ];
+            }
+            if ($row['k']) {
+                $configs[$userId][$limitId][$row['k']] = $row['v'];
+            }
+        }
+        foreach ($configs as &$userConfigs) {
+            ksort($userConfigs);
+        }
+        return $configs;
+    }
+
     private function parseRows(array $rows): array
     {
         $config = [];

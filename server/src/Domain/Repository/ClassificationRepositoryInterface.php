@@ -25,4 +25,9 @@ interface ClassificationRepositoryInterface
      * @return Classification[]
      */
     public function findAll(): array;
+
+    /**
+     * @return array<int, list<Classification>>
+     */
+    public function findAllGroupedByClassId(): array;
 }
