@@ -1,0 +1,34 @@
+{
+    "name": "aldarien/wasted-youth-tracker",
+    "type": "project",
+    "authors": [
+        {
+            "name": "zeiren"
+        }
+    ],
+    "require": {
+        "monolog/monolog": "^3.12",
+        "nyholm/psr7": "^1.8",
+        "nyholm/psr7-server": "^1.1",
+        "php-di/php-di": "^7.1",
+        "php-di/slim-bridge": "^3.4",
+        "slim/slim": "^4.15",
+        "slim/twig-view": "^3.4.1"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^13.3"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Zieren\\WYT\\Tests\\": "tests/"
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Zieren\\WYT\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

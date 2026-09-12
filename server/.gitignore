@@ -1,0 +1,7 @@
+**/.idea/
+**/.agents/
+
+**/vendor/
+**/node_modules/
+**/*.env
+**/.phpunit.cache/
