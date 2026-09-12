@@ -2,11 +2,11 @@
 
 use function DI\create;
 use function DI\get;
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Level;
+use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 use Slim\Views\Twig;
-
-require_once __DIR__ . '/../../common/base.php';
-require_once __DIR__ . '/../../common/Logger.php';
-require_once __DIR__ . '/../../common/config.php';
 
 return [
     Twig::class => static function (): Twig {
@@ -15,16 +15,26 @@ return [
         ]);
     },
 
-    \Psr\Log\LoggerInterface::class => static function () {
-        return \Logger::Instance();
+    LoggerInterface::class => static function (): LoggerInterface {
+        $logDirectory = __DIR__ . '/../../logs';
+        if (!is_dir($logDirectory)) {
+            mkdir($logDirectory, 0775, true);
+        }
+        $logger = new Logger('wasted-youth-tracker');
+        $logger->pushHandler(new RotatingFileHandler(
+            $logDirectory . '/application.log',
+            0,
+            Level::Debug
+        ));
+        return $logger;
     },
 
     \Zieren\WYT\Domain\Clock::class => create(\Zieren\WYT\Infrastructure\Clock\SystemClock::class),
 
-    'db.host' => 'localhost',
-    'db.name' => DB_NAME,
-    'db.user' => DB_USER,
-    'db.password' => DB_PASS,
+    'db.host' => getenv('DB_HOST') ?: 'localhost',
+    'db.name' => getenv('DB_NAME') ?: '',
+    'db.user' => getenv('DB_USER') ?: '',
+    'db.password' => getenv('DB_PASS') ?: '',
     'db.encoding' => 'latin1',
 
     \Zieren\WYT\Infrastructure\Persistence\Connection::class =>
@@ -84,7 +94,7 @@ return [
 
     \Zieren\WYT\Domain\Repository\LogPruningInterface::class =>
         create(\Zieren\WYT\Infrastructure\Logging\LogPruner::class)
-            ->constructor(get(\Psr\Log\LoggerInterface::class), \Logger::getLogDir()),
+            ->constructor(get(LoggerInterface::class), __DIR__ . '/../../logs'),
 
     \Zieren\WYT\Infrastructure\Persistence\DatabaseInitializer::class =>
         create(\Zieren\WYT\Infrastructure\Persistence\DatabaseInitializer::class)

@@ -8,6 +8,8 @@ use Zieren\WYT\Domain\Repository\LogPruningInterface;
 
 class LogPruner implements LogPruningInterface
 {
+    private const LOG_PATTERN = '/^application-(\d{4}-\d{2}-\d{2})\.log$/';
+
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly string $logDir = ''
@@ -24,7 +26,7 @@ class LogPruner implements LogPruningInterface
             return;
         }
         foreach ($logfiles as $file) {
-            if (preg_match(LOG_PATTERN, $file, $matches)) {
+            if (preg_match(self::LOG_PATTERN, $file, $matches)) {
                 $fileDate = (new DateTimeImmutable())->setTimestamp(strtotime($matches[1]));
                 $fileDate = $fileDate->modify('+1 day');
                 if ($fileDate->getTimestamp() < $before->getTimestamp()) {

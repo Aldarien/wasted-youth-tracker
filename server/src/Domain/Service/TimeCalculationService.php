@@ -25,6 +25,7 @@ class TimeCalculationService
             return [];
         }
 
+        /** @var array<int, array{starting?: int[], ending?: int[], day?: string}> $timestamps */
         $timestamps = [];
         $limitIds = [];
         $minTs = $rows[0]['from_ts'];
@@ -73,8 +74,8 @@ class TimeCalculationService
                     $limitTime[$limitId] = ($limitTime[$limitId] ?? 0) + ($ts - $limitStart[$limitId]);
                 }
             }
-            if (isset($events['day'])) {
-                $dateString = $events['day'];
+            $dateString = $events['day'] ?? null;
+            if ($dateString !== null) {
                 foreach (array_keys($limitIds) as $limitId) {
                     if (($limitCount[$limitId] ?? 0) > 0) {
                         $limitTime[$limitId] = ($limitTime[$limitId] ?? 0) + ($ts - $limitStart[$limitId]);

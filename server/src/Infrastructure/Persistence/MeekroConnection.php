@@ -4,8 +4,6 @@ namespace Zieren\WYT\Infrastructure\Persistence;
 
 use Psr\Log\LoggerInterface;
 
-require_once __DIR__ . '/../../../common/db.class.php';
-
 class MeekroConnection implements Connection
 {
     public function __construct(
@@ -21,7 +19,6 @@ class MeekroConnection implements Connection
         \DB::$password = $password;
         \DB::$host = $host;
         \DB::$encoding = $encoding;
-        \DB::$throw_exception_on_error = true;
     }
 
     public function query(string $sql, ...$args): array

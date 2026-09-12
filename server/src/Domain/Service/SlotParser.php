@@ -31,6 +31,12 @@ class SlotParser
                 continue;
             }
             $m = [];
+            $fromHour = 0;
+            $fromMinute = 0;
+            $toHour = 0;
+            $toMinute = 0;
+            $fromTimestamp = 0;
+            $toTimestamp = 0;
             $valid = false;
             if (preg_match_all(self::TIME_OF_DAY_PATTERN, $slotString, $m) && count($m[0]) == 2) {
                 $fromHour = $this->adjust12hFormat(intval($m[1][0]), strtolower($m[3][0]));

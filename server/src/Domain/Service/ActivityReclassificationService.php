@@ -33,7 +33,7 @@ class ActivityReclassificationService
     {
         foreach ($this->activityRepository->findTitlesByClass($classId) as $title) {
             $classification = $this->classificationRepository->findBestMatch($title);
-            $newClassId = $classification?->classId ?? Defaults::DEFAULT_CLASS_ID;
+            $newClassId = $classification->classId ?? Defaults::DEFAULT_CLASS_ID;
             $this->activityRepository->updateClassForTitle($title, $classId, $newClassId);
         }
     }

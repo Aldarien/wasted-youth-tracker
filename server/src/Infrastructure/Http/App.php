@@ -7,7 +7,6 @@ use Throwable;
 use DI\ContainerBuilder;
 use DI\Bridge\Slim\Bridge as SlimBridge;
 use Slim\App as SlimApp;
-use SplFileInfo;
 
 class App extends SlimApp
 {
@@ -16,9 +15,9 @@ class App extends SlimApp
     public static function create(
         string $bootstrapDirectory,
         array $customFolderNames = ['definitions' => 'settings', 'autowires' => 'setups']
-    ): self
+    ): SlimApp
     {
-        App::checkRequirements(dirname($bootstrapDirectory));
+        App::checkRequirements();
 
         $builder = new ContainerBuilder();
 
@@ -29,7 +28,6 @@ class App extends SlimApp
             if (!is_dir($folder)) {
                 continue;
             }
-            /** @var SplFileInfo[] $files */
             $files = new GlobIterator("$folder/*.php");
             foreach ($files as $filePath => $file) {
                 $builder->addDefinitions($filePath);
@@ -42,10 +40,12 @@ class App extends SlimApp
             throw new RuntimeException('Failed to create application: [' . $exception::class . '] ' . $exception->getMessage());
         }
 
+        $app->addBodyParsingMiddleware();
+
         return $app;
     }
 
-    public static function checkRequirements(?string $applicationDirectory = null): void
+    public static function checkRequirements(): void
     {
         $unmet = [];
         if (version_compare(PHP_VERSION, self::MIN_PHP_VERSION) < 0) {
@@ -54,11 +54,8 @@ class App extends SlimApp
         if (!function_exists('mysqli_connect')) {
             $unmet[] = 'The mysqli extension is missing.';
         }
-        $configPath = $applicationDirectory === null
-            ? 'common/config.php'
-            : implode(DIRECTORY_SEPARATOR, [$applicationDirectory, 'common', 'config.php']);
-        if (!file_exists($configPath)) {
-            $unmet[] = 'The file <code>common/config.php</code> is missing.';
+        if (!(getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? ''))) {
+            $unmet[] = 'The DB_NAME environment variable is missing.';
         }
         if (!$unmet) {
             return;

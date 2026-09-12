@@ -10,6 +10,13 @@
         <p>
             <input type="text" name="configKey" placeholder="key">
             <input type="text" name="configValue" placeholder="value">
+            <select id="idUsers" name="selectedUser">
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.id }}</option>
+                {% else %}
+                    <option value="">No users configured</option>
+                {% endfor %}
+            </select>
         </p>
 
         <p>

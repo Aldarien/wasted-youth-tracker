@@ -12,10 +12,12 @@
         "nyholm/psr7-server": "^1.1",
         "php-di/php-di": "^7.1",
         "php-di/slim-bridge": "^3.4",
+        "sergeytsalkov/meekrodb": "^2.5",
         "slim/slim": "^4.15",
         "slim/twig-view": "^3.4.1"
     },
     "require-dev": {
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^13.3"
     },
     "autoload-dev": {
@@ -27,6 +29,9 @@
         "psr-4": {
             "Zieren\\WYT\\": "src/"
         }
+    },
+    "scripts": {
+        "analyse": "phpstan analyse"
     },
     "config": {
         "sort-packages": true

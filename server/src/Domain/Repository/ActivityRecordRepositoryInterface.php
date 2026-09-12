@@ -17,7 +17,7 @@ interface ActivityRecordRepositoryInterface
 
     /**
      * @param string[] $titles
-     * @return ActivityRecord[]
+     * @return array<int, array{title: string, from_ts: int}>
      */
     public function findRecentByTitles(string $userId, int $previousSeq, int $sinceTs, array $titles): array;
 
