@@ -1,0 +1,63 @@
+<html>
+    <head>
+        <title>Wasted Youth Tracker - Admin</title>
+        <meta charset="iso-8859-1"/>
+        <link rel="stylesheet" href="/assets/css/wasted.css">
+    </head>
+    <body onload="setup()">
+        <h3>Update config</h3>
+        <form method="post" enctype="multipart/form-data">
+        <p>
+            <input type="text" name="configKey" placeholder="key">
+            <input type="text" name="configValue" placeholder="value">
+        </p>
+
+        <p>
+            <input type="submit" name="setUserConfig" value="Set User Config"
+                onClick="submitWithUiState(this);">
+            <input type="submit" name="clearUserConfig" value="Clear User Config"
+                onClick="submitWithUiState(this);">
+        </p>
+
+        <p>
+            <input type="submit" name="setGlobalConfig" value="Set Global Config"
+                onClick="submitWithUiState(this);">
+            <input type="submit" name="clearGlobalConfig" value="Clear Global Config"
+                onClick="submitWithUiState(this);">
+        </p>
+        </form>
+
+        <h3>Users</h3>
+        <form method="post" enctype="multipart/form-data">
+        <input type="text" name="userId" required placeholder="id">
+        <input type="submit" name="addUser" value="Add" onClick="submitWithUiState(this);">
+        <input type="submit" name="removeUser" value="Remove"
+            onclick="return submitWithUiState(this, 'Remove user and all their data?');">
+        </form>
+        <ul>
+            {% for user in users %}
+                <li>{{ user.id }}</li>
+            {% else %}
+                <li>No users configured.</li>
+            {% endfor %}
+        </ul>
+
+        <h3>Manage Database</h3>
+        <form method="post">
+            Delete activity (of all users!) and server logs older than
+            <input type="date" name="datePrune" value="{{ pruneFromDate|date('Y-m-d') }}">
+            <input type="submit" value="DELETE" name="prune"
+                onclick="return submitWithUiState(this, 'Delete activity and server logs?');" />
+        </form>
+        <p>
+            &copy; 2021-2023 <a href="https://zieren.de">J&ouml;rg Zieren</a>
+            (<a href="https://github.com/zieren">github</a>), GNU GPL v3.
+            Components:
+            <a href="https://www.autohotkey.com/">AutoHotkey</a> by The AutoHotkey Foundation, GNU GPL v2;
+            <a href="https://meekro.com/">MeekroDB</a> by Sergey Tsalkov, GNU LGPL v3;
+            <a href="https://github.com/katzgrau/KLogger">KLogger</a> by Kenny Katzgrau, MIT license.
+        </p>
+
+        <script src="/assets/js/index.js"></script>
+    </body>
+</html>
