@@ -191,7 +191,13 @@ return [
         create(\Zieren\WYT\Application\Service\ConfigManagementService::class),
 
     \Zieren\WYT\Application\Service\AdminViewService::class =>
-        create(\Zieren\WYT\Application\Service\AdminViewService::class),
+        create(\Zieren\WYT\Application\Service\AdminViewService::class)
+            ->constructor(
+                get(\Zieren\WYT\Domain\Repository\UserRepositoryInterface::class),
+                get(\Zieren\WYT\Domain\Repository\ClassRepositoryInterface::class),
+                get(\Zieren\WYT\Domain\Repository\ClassificationRepositoryInterface::class),
+                get(\Zieren\WYT\Domain\Repository\ConfigRepositoryInterface::class)
+            ),
 
     \Zieren\WYT\Application\Service\UserManagementService::class =>
         create(\Zieren\WYT\Application\Service\UserManagementService::class),
