@@ -37,6 +37,8 @@ jobs:
           cache: npm
           cache-dependency-path: server/package-lock.json
       - run: composer install --no-interaction --prefer-dist
+      - run: composer validate --strict --no-interaction
+      - run: composer audit --no-interaction
       - run: npm ci
       - run: npm run build:assets
       - run: npm run test:frontend
