@@ -30,8 +30,13 @@ class LogPruner implements LogPruningInterface
                 $fileDate = (new DateTimeImmutable())->setTimestamp(strtotime($matches[1]));
                 $fileDate = $fileDate->modify('+1 day');
                 if ($fileDate->getTimestamp() < $before->getTimestamp()) {
-                    unlink($this->logDir . '/' . $file);
-                    $this->logger->notice('log file deleted: ' . $file);
+                    if (unlink($this->logDir . '/' . $file)) {
+                        $this->logger->notice('log file deleted: ' . $file);
+                    } else {
+                        $this->logger->error('log file could not be deleted', [
+                            'file' => $file,
+                        ]);
+                    }
                 }
             }
         }

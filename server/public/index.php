@@ -8,9 +8,11 @@ try {
 } catch (\Throwable $error) {
     if ($app !== null) {
         $app->getContainer()->get(LoggerInterface::class)
-            ->error($error->getMessage(), ['trace' => $error->getTraceAsString()]);
+            ->error('Application bootstrap failed', [
+                'exception' => $error,
+            ]);
     } else {
-        error_log($error->getMessage());
+        error_log('Application bootstrap failed: ' . $error->getMessage());
     }
     http_response_code(500);
     echo 'Internal Server Error';

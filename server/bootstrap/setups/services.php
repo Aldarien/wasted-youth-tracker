@@ -2,11 +2,23 @@
 
 use function DI\create;
 use function DI\get;
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\RotatingFileHandler;
+use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Slim\Views\Twig;
+use Zieren\WYT\Infrastructure\Logging\SensitiveDataProcessor;
+
+$env = static function (string $name): ?string {
+    if (array_key_exists($name, $_ENV)) {
+        return (string) $_ENV[$name];
+    }
+
+    $value = getenv($name);
+    return $value === false ? null : $value;
+};
 
 return [
     Twig::class => static function (): Twig {
@@ -15,26 +27,81 @@ return [
         ]);
     },
 
-    LoggerInterface::class => static function (): LoggerInterface {
-        $logDirectory = __DIR__ . '/../../logs';
-        if (!is_dir($logDirectory)) {
-            mkdir($logDirectory, 0775, true);
+    'log.directory' => static function () use ($env): string {
+        return $env('LOG_DIRECTORY') ?: __DIR__ . '/../../logs';
+    },
+
+    'http.slow_request_ms' => static function () use ($env): int {
+        $value = $env('LOG_SLOW_REQUEST_MS') ?? '1000';
+        if (preg_match('/^[1-9]\d*$/', $value) !== 1) {
+            throw new \RuntimeException('LOG_SLOW_REQUEST_MS must be a positive integer.');
         }
+        return (int) $value;
+    },
+
+    LoggerInterface::class => static function () use ($env): LoggerInterface {
+        $logDirectory = $env('LOG_DIRECTORY') ?: __DIR__ . '/../../logs';
+        if (!is_dir($logDirectory)) {
+            if (!mkdir($logDirectory, 0750, true) && !is_dir($logDirectory)) {
+                throw new \RuntimeException('Unable to create log directory: ' . $logDirectory);
+            }
+        }
+        $logLevelName = strtoupper($env('LOG_LEVEL') ?: 'INFO');
+        try {
+            $logLevel = Level::fromName($logLevelName);
+        } catch (\ValueError|\UnhandledMatchError $exception) {
+            throw new \RuntimeException('Invalid LOG_LEVEL: ' . $logLevelName, 0, $exception);
+        }
+
+        $maxFilesValue = $env('LOG_MAX_FILES') ?? '14';
+        if (preg_match('/^[1-9]\d*$/', $maxFilesValue) !== 1) {
+            throw new \RuntimeException('LOG_MAX_FILES must be a positive integer.');
+        }
+        $maxFiles = (int) $maxFilesValue;
+
+        $logToStderr = filter_var(
+            $env('LOG_STDERR') ?? 'true',
+            FILTER_VALIDATE_BOOL,
+            FILTER_NULL_ON_FAILURE
+        );
+        if ($logToStderr === null) {
+            throw new \RuntimeException('LOG_STDERR must be true or false.');
+        }
+
+        $formatter = new JsonFormatter(
+            JsonFormatter::BATCH_MODE_NEWLINES,
+            true,
+            false,
+            false
+        );
         $logger = new Logger('wasted-youth-tracker');
-        $logger->pushHandler(new RotatingFileHandler(
+        $logger->pushProcessor(new SensitiveDataProcessor());
+        $fileHandler = new RotatingFileHandler(
             $logDirectory . '/application.log',
-            0,
-            Level::Debug
-        ));
+            $maxFiles,
+            $logLevel,
+            true,
+            0640,
+            true
+        );
+        $fileHandler->setFormatter($formatter);
+        $logger->pushHandler($fileHandler);
+
+        if ($logToStderr) {
+            $stderrHandler = new StreamHandler('php://stderr', $logLevel);
+            $stderrHandler->setFormatter($formatter);
+            $logger->pushHandler($stderrHandler);
+        }
+
         return $logger;
     },
 
     \Zieren\WYT\Domain\Clock::class => create(\Zieren\WYT\Infrastructure\Clock\SystemClock::class),
 
-    'db.host' => getenv('DB_HOST') ?: 'localhost',
-    'db.name' => getenv('DB_NAME') ?: '',
-    'db.user' => getenv('DB_USER') ?: '',
-    'db.password' => getenv('DB_PASS') ?: '',
+    'db.host' => $env('DB_HOST') ?: 'localhost',
+    'db.name' => $env('DB_NAME') ?: '',
+    'db.user' => $env('DB_USER') ?: '',
+    'db.password' => $env('DB_PASS') ?: '',
     'db.encoding' => 'latin1',
 
     \Zieren\WYT\Infrastructure\Persistence\Connection::class =>
@@ -102,7 +169,7 @@ return [
 
     \Zieren\WYT\Domain\Repository\LogPruningInterface::class =>
         create(\Zieren\WYT\Infrastructure\Logging\LogPruner::class)
-            ->constructor(get(LoggerInterface::class), __DIR__ . '/../../logs'),
+            ->constructor(get(LoggerInterface::class), get('log.directory')),
 
     \Zieren\WYT\Infrastructure\Persistence\DatabaseInitializer::class =>
         create(\Zieren\WYT\Infrastructure\Persistence\DatabaseInitializer::class)
