@@ -158,3 +158,9 @@ function sortActivityTable(column) {
   }
   header.cells[column].descending = descending;
 }
+
+globalThis.setup = setup;
+globalThis.setToday = setToday;
+globalThis.setWeekStart = setWeekStart;
+globalThis.setSameDay = setSameDay;
+globalThis.submitWithUiState = submitWithUiState;
