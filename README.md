@@ -34,6 +34,17 @@ availability for deployment readiness checks.
 
 Run checks with `vendor/bin/phpstan analyse` and `vendor/bin/phpunit`.
 
+To review the UI locally through the development Nginx proxy:
+
+```sh
+docker compose --profile ui up -d --build
+docker compose run --rm php php bin/migrate.php
+```
+
+Open `http://localhost:8081/` (or the port configured with `UI_PORT`). If a local Traefik instance is connected to the
+`global-proxy` network, open `http://wyt.localhost/` instead. Set
+`TRAEFIK_NETWORK` if your Traefik network has another name.
+
 ### Production operations
 
 Run the application as a non-root user, inject secrets through the process

@@ -2,9 +2,20 @@
     <head>
         <title>Wasted Youth Tracker - Admin</title>
         <meta charset="iso-8859-1"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
         <link rel="stylesheet" href="/assets/css/wasted.css">
     </head>
     <body onload="setup()">
+        <a class="skip-link" href="#main-content">Skip to content</a>
+        <header class="app-header">
+            <div>
+                <p class="eyebrow">WASTED YOUTH TRACKER</p>
+                <h1>Admin console</h1>
+                <p class="subtitle">Manage users, schedules, classifications, and overrides.</p>
+            </div>
+            <span class="status-pill"><span></span>System online</span>
+        </header>
+        <main id="main-content">
         <h3>Update config</h3>
         <form method="post" enctype="multipart/form-data">
         <p>
@@ -188,7 +199,7 @@
             <input type="submit" value="DELETE" name="prune"
                 onclick="return submitWithUiState(this, 'Delete activity and server logs?');" />
         </form>
-        <p>
+        <p class="page-note">
             &copy; 2021-2023 <a href="https://zieren.de">J&ouml;rg Zieren</a>
             (<a href="https://github.com/zieren">github</a>), GNU GPL v3.
             Components:
@@ -196,6 +207,7 @@
             PDO MySQL;
             <a href="https://github.com/katzgrau/KLogger">KLogger</a> by Kenny Katzgrau, MIT license.
         </p>
+        </main>
 
         <script src="/assets/js/index.js"></script>
     </body>
