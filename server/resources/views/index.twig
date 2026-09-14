@@ -11,11 +11,34 @@
             <div>
                 <p class="eyebrow">WASTED YOUTH TRACKER</p>
                 <h1>Admin console</h1>
-                <p class="subtitle">Manage users, schedules, classifications, and overrides.</p>
+                <p class="subtitle">Set up one user at a time, then add limits and rules as you need them.</p>
             </div>
             <span class="status-pill"><span></span>System online</span>
         </header>
         <main id="main-content">
+        <section class="welcome-panel">
+            <div>
+                <p class="eyebrow eyebrow-dark">GETTING STARTED</p>
+                <h2>Build your first protection profile</h2>
+                <p>Follow the panels in order: add a user, create a limit, then add rules that classify activity.</p>
+            </div>
+            <ol class="setup-steps">
+                <li><span>1</span><strong>Add a user</strong><small>Example: <code>alex</code></small></li>
+                <li><span>2</span><strong>Create a limit</strong><small>Example: <code>School night</code></small></li>
+                <li><span>3</span><strong>Add rules</strong><small>Example: <code>youtube|netflix</code></small></li>
+            </ol>
+        </section>
+        <nav class="section-nav" aria-label="Admin sections">
+            <a href="#users">Users</a>
+            <a href="#rules">Rules</a>
+            <a href="#limits">Limits</a>
+            <a href="#advanced">Advanced</a>
+        </nav>
+        <details class="workspace-panel compact-panel" id="config">
+        <summary><span><strong>Quick configuration</strong><small>Optional key/value settings</small></span><b>Show section</b></summary>
+        <div class="panel-content">
+        <p class="help-text">Most installations do not need this on the first visit. Use it when you have a
+            documented key and want to apply it to one user or globally.</p>
         <h3>Update config</h3>
         <form method="post" enctype="multipart/form-data">
         <p>
@@ -44,7 +67,14 @@
                 onClick="submitWithUiState(this);">
         </p>
         </form>
+        </div>
+        </details>
 
+        <details class="workspace-panel" id="users" open>
+        <summary><span><strong>1. Users</strong><small>Who should be managed?</small></span><b>Show section</b></summary>
+        <div class="panel-content">
+        <p class="help-text">Create one user for each person or device profile you want to manage.
+            Use a short, stable identifier such as <code>alex</code> or <code>gaming-pc</code>.</p>
         <h3>Users</h3>
         <form method="post" enctype="multipart/form-data">
         <input type="text" name="userId" required placeholder="id">
@@ -60,6 +90,13 @@
             {% endfor %}
         </ul>
 
+        </div>
+        </details>
+        <details class="workspace-panel" id="rules">
+        <summary><span><strong>2. Rules and classifications</strong><small>Group activity by topic or app</small></span><b>Show section</b></summary>
+        <div class="panel-content">
+        <p class="help-text">Add a class, then match activity titles with a pattern. For example,
+            <code>youtube|netflix</code> matches either title. Lower priority numbers are checked first.</p>
         <h3>Classes and classifications</h3>
         <form method="post">
             <input type="text" name="className" required placeholder="class name">
@@ -123,6 +160,13 @@
             <input type="submit" name="reclassify" value="Reclassify">
         </form>
 
+        </div>
+        </details>
+        <details class="workspace-panel" id="limits">
+        <summary><span><strong>3. Limits and overrides</strong><small>Set time or usage rules per user</small></span><b>Show section</b></summary>
+        <div class="panel-content">
+        <p class="help-text">Create a limit for each user, then configure its settings. Use an override
+            to temporarily allow or block access on a specific date.</p>
         <h3>Limits and mappings</h3>
         {% for user in users %}
             <section>
@@ -183,6 +227,13 @@
             </section>
         {% endfor %}
 
+        </div>
+        </details>
+        <details class="workspace-panel" id="advanced">
+        <summary><span><strong>4. Advanced configuration</strong><small>Fine-tune settings and maintenance</small></span><b>Show section</b></summary>
+        <div class="panel-content">
+        <p class="help-text">These tools are optional. Use configuration keys from your deployment documentation,
+            and take care with database cleanup because it affects all users.</p>
         <h3>Global configuration</h3>
         <ul>
             {% for key, value in globalConfig %}
@@ -199,6 +250,8 @@
             <input type="submit" value="DELETE" name="prune"
                 onclick="return submitWithUiState(this, 'Delete activity and server logs?');" />
         </form>
+        </div>
+        </details>
         <p class="page-note">
             &copy; 2021-2023 <a href="https://zieren.de">J&ouml;rg Zieren</a>
             (<a href="https://github.com/zieren">github</a>), GNU GPL v3.
