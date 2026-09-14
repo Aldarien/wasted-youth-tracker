@@ -6,6 +6,7 @@ use RuntimeException;
 use Throwable;
 use DI\ContainerBuilder;
 use DI\Bridge\Slim\Bridge as SlimBridge;
+use Psr\Log\LoggerInterface;
 use Slim\App as SlimApp;
 
 class App extends SlimApp
@@ -41,6 +42,11 @@ class App extends SlimApp
         }
 
         $app->addBodyParsingMiddleware();
+        $app->add(new SecurityHeadersMiddleware());
+        $app->add(new RequestLoggingMiddleware(
+            $app->getContainer()->get(LoggerInterface::class),
+            $app->getContainer()->get('http.slow_request_ms')
+        ));
 
         return $app;
     }
