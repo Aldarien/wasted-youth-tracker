@@ -28,11 +28,12 @@
                 <li><span>3</span><strong>Add rules</strong><small>Example: <code>youtube|netflix</code></small></li>
             </ol>
         </section>
-        <nav class="section-nav" aria-label="Admin sections">
-            <a href="#users">Users</a>
-            <a href="#rules">Rules</a>
-            <a href="#limits">Limits</a>
-            <a href="#advanced">Advanced</a>
+        <nav class="section-tabs" aria-label="Admin sections" role="tablist">
+            <button class="section-tab" id="tab-config" type="button" role="tab" aria-controls="config" aria-selected="false" data-tab="config">Configuration</button>
+            <button class="section-tab" id="tab-users" type="button" role="tab" aria-controls="users" aria-selected="true" data-tab="users">Users</button>
+            <button class="section-tab" id="tab-rules" type="button" role="tab" aria-controls="rules" aria-selected="false" data-tab="rules">Rules</button>
+            <button class="section-tab" id="tab-limits" type="button" role="tab" aria-controls="limits" aria-selected="false" data-tab="limits">Limits</button>
+            <button class="section-tab" id="tab-advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false" data-tab="advanced">Advanced</button>
         </nav>
         <details class="workspace-panel compact-panel" id="config">
         <summary><span><strong>Quick configuration</strong><small>Optional key/value settings</small></span><b>Show section</b></summary>

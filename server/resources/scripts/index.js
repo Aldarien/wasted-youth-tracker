@@ -6,9 +6,10 @@ function toggleCollapsed(tr) {
   }
 };
 function setup() {
+  setupTabs();
   const tableActivity = document.querySelector("#idTableActivity");
   if (!tableActivity) {
-    return; // preconditions failed, page wasn't rendered
+    return; // activity table is not present on every page
   }
   const header = tableActivity.rows[0];
   for (var i = 0; i < header.cells.length; i++) {
@@ -20,6 +21,43 @@ function setup() {
     tr.addEventListener("click", function() { toggleCollapsed(tr); });
   });
   sortActivityTable(0);
+}
+function setupTabs() {
+  if (typeof document.querySelectorAll !== "function") {
+    return;
+  }
+  const tabs = document.querySelectorAll(".section-tab");
+  const panels = document.querySelectorAll(".workspace-panel");
+  if (!tabs.length || !panels.length) {
+    return;
+  }
+  const selectTab = function(tab) {
+    const selectedId = tab.dataset.tab;
+    tabs.forEach(function(item) {
+      const selected = item === tab;
+      item.setAttribute("aria-selected", selected ? "true" : "false");
+      item.tabIndex = selected ? 0 : -1;
+    });
+    panels.forEach(function(panel) {
+      const selected = panel.id === selectedId;
+      panel.hidden = !selected;
+      panel.open = selected;
+    });
+  };
+  tabs.forEach(function(tab, index) {
+    tab.addEventListener("click", function() { selectTab(tab); });
+    tab.addEventListener("keydown", function(event) {
+      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
+        return;
+      }
+      event.preventDefault();
+      const nextIndex = (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+      tabs[nextIndex].focus();
+      selectTab(tabs[nextIndex]);
+    });
+  });
+  const initiallySelected = document.querySelector('.section-tab[aria-selected="true"]') || tabs[0];
+  selectTab(initiallySelected);
 }
 function setToday(id) {
   const today = new Date();
