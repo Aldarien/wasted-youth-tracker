@@ -99,6 +99,25 @@ class AdminServiceIntegrationTest extends TestCase
         $this->assertSame('Total', $limit->name);
     }
 
+    public function testTotalLimitNameIsConfigurableViaGlobalConfig(): void
+    {
+        $configService = $this->createConfigManagementService();
+        $userService = $this->createUserManagementService();
+        $limitRepository = new PdoLimitRepository($this->connection);
+
+        $configService->setGlobalConfig(Defaults::TOTAL_LIMIT_NAME_CONFIG_KEY, 'Everything');
+        $limitId = $userService->addUser('u1');
+        $limit = $limitRepository->findById($limitId);
+        $this->assertNotNull($limit);
+        $this->assertSame('Everything', $limit->name);
+
+        $configService->clearGlobalConfig(Defaults::TOTAL_LIMIT_NAME_CONFIG_KEY);
+        $limitId2 = $userService->addUser('u2');
+        $limit2 = $limitRepository->findById($limitId2);
+        $this->assertNotNull($limit2);
+        $this->assertSame(Defaults::TOTAL_LIMIT_NAME, $limit2->name);
+    }
+
     public function testClassLifecycle(): void
     {
         $service = $this->createClassManagementService();
@@ -272,12 +291,25 @@ class AdminServiceIntegrationTest extends TestCase
         $service->setUserConfig('u1', 'theme', 'light');
 
         $configRepository = new PdoConfigRepository($this->connection);
-        $this->assertSame(['theme' => 'dark'], $configRepository->getGlobalConfig());
+        $this->assertSame(
+            [
+                'theme' => 'dark',
+                'total_limit_minutes_day' => '0',
+                'total_limit_name' => 'Total',
+            ],
+            $configRepository->getGlobalConfig()
+        );
         $this->assertSame(['theme' => 'light'], $configRepository->getUserConfig('u1'));
 
         $service->clearUserConfig('u1', 'theme');
         $service->clearGlobalConfig('theme');
-        $this->assertSame([], $configRepository->getGlobalConfig());
+        $this->assertSame(
+            [
+                'total_limit_minutes_day' => '0',
+                'total_limit_name' => 'Total',
+            ],
+            $configRepository->getGlobalConfig()
+        );
         $this->assertSame([], $configRepository->getUserConfig('u1'));
     }
 
@@ -378,7 +410,6 @@ class AdminServiceIntegrationTest extends TestCase
     {
         return new LimitManagementService(
             new PdoLimitRepository($this->connection),
-            new PdoUserRepository($this->connection),
             new PdoConfigRepository($this->connection),
             new SlotParser($this->clock)
         );
@@ -389,17 +420,39 @@ class AdminServiceIntegrationTest extends TestCase
         return new ConfigManagementService(new PdoConfigRepository($this->connection));
     }
 
+    private function createEventDispatcher(): \Zieren\WYT\Infrastructure\Event\InMemoryEventDispatcher
+    {
+        $dispatcher = new \Zieren\WYT\Infrastructure\Event\InMemoryEventDispatcher();
+        $userRepository = new PdoUserRepository($this->connection);
+        $mappingRepository = new PdoClassLimitMappingRepository($this->connection);
+        $configRepository = new PdoConfigRepository($this->connection);
+
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\UserCreated::class,
+            new \Zieren\WYT\Application\Event\MapNewUserToAllClasses($mappingRepository)
+        );
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\UserCreated::class,
+            new \Zieren\WYT\Application\Event\ApplyTotalLimitDefaultConfig($configRepository)
+        );
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\ClassCreated::class,
+            new \Zieren\WYT\Application\Event\MapNewClassToTotalLimits($userRepository, $mappingRepository)
+        );
+
+        return $dispatcher;
+    }
+
     private function createClassManagementService(): ClassManagementService
     {
         return new ClassManagementService(
             new PdoClassRepository($this->connection),
-            new PdoUserRepository($this->connection),
-            new PdoClassLimitMappingRepository($this->connection),
             new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection),
             new ActivityReclassificationService(
                 new PdoActivityRepository($this->connection),
                 new PdoClassificationRepository($this->connection)
-            )
+            ),
+            $this->createEventDispatcher()
         );
     }
 
@@ -433,8 +486,9 @@ class AdminServiceIntegrationTest extends TestCase
         return new UserManagementService(
             new PdoUserRepository($this->connection),
             new PdoLimitRepository($this->connection),
-            new PdoClassLimitMappingRepository($this->connection),
-            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection),
+            new PdoConfigRepository($this->connection),
+            $this->createEventDispatcher()
         );
     }
 }

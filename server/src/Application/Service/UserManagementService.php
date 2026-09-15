@@ -2,33 +2,43 @@
 
 namespace Zieren\WYT\Application\Service;
 
+use Zieren\WYT\Application\Event\EventDispatcher;
+use Zieren\WYT\Application\Service\Contract\UserManagementServiceInterface;
+use Zieren\WYT\Domain\Defaults;
 use Zieren\WYT\Domain\Entity\Limit;
 use Zieren\WYT\Domain\Entity\User;
-use Zieren\WYT\Domain\Defaults;
+use Zieren\WYT\Domain\Event\UserCreated;
+use Zieren\WYT\Domain\Repository\ConfigRepositoryInterface;
 use Zieren\WYT\Domain\Repository\LimitRepositoryInterface;
 use Zieren\WYT\Domain\Repository\TransactionManagerInterface;
-use Zieren\WYT\Domain\Repository\ClassLimitMappingRepositoryInterface;
 use Zieren\WYT\Domain\Repository\UserRepositoryInterface;
 
-class UserManagementService
+class UserManagementService implements UserManagementServiceInterface
 {
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
         private readonly LimitRepositoryInterface $limitRepository,
-        private readonly ClassLimitMappingRepositoryInterface $classLimitMappingRepository,
-        private readonly TransactionManagerInterface $transactionManager
+        private readonly TransactionManagerInterface $transactionManager,
+        private readonly ConfigRepositoryInterface $configRepository,
+        private readonly EventDispatcher $eventDispatcher
     ) {
     }
 
     public function addUser(string $id): int
     {
         $limitId = $this->transactionManager->run(function () use ($id): int {
+            $totalLimitName = $this->configRepository->getGlobalConfigValue(
+                Defaults::TOTAL_LIMIT_NAME_CONFIG_KEY
+            ) ?? Defaults::TOTAL_LIMIT_NAME;
+
             $this->userRepository->save(new User($id));
             $limitId = $this->limitRepository->save(
-                new Limit(0, $id, Defaults::TOTAL_LIMIT_NAME)
+                new Limit(0, $id, $totalLimitName)
             );
             $this->userRepository->updateTotalLimit($id, $limitId);
-            $this->classLimitMappingRepository->mapAllClassesToLimit($limitId);
+
+            $this->eventDispatcher->dispatch(new UserCreated($id, $limitId));
+
             return $limitId;
         });
         return $limitId;

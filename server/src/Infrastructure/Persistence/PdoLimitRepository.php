@@ -65,4 +65,13 @@ class PdoLimitRepository implements LimitRepositoryInterface
         return new Limit((int) $row['id'], $row['user'], $row['name']);
     }
 
+    public function isTotalLimit(int $id): bool
+    {
+        $row = $this->connection->queryFirstRow(
+            'SELECT 1 FROM users WHERE total_limit_id = %i LIMIT 1',
+            $id
+        );
+        return $row !== null;
+    }
+
 }
