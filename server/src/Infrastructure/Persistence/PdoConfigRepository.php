@@ -16,6 +16,26 @@ class PdoConfigRepository implements ConfigRepositoryInterface
         return $this->parseRows($this->connection->query('SELECT k, v FROM global_config'));
     }
 
+    public function getGlobalConfigValue(string $key): ?string
+    {
+        return $this->getGlobalString($key);
+    }
+
+    public function getGlobalString(string $key): ?string
+    {
+        $row = $this->connection->queryFirstRow('SELECT v FROM global_config WHERE k = %s', $key);
+        return $row ? (string) $row['v'] : null;
+    }
+
+    public function getGlobalInt(string $key): ?int
+    {
+        $value = $this->getGlobalString($key);
+        if ($value === null || filter_var($value, FILTER_VALIDATE_INT) === false) {
+            return null;
+        }
+        return (int) $value;
+    }
+
     public function setGlobalConfig(string $key, string $value): void
     {
         $this->connection->insertUpdate('global_config', ['k' => $key, 'v' => $value]);
@@ -31,6 +51,25 @@ class PdoConfigRepository implements ConfigRepositoryInterface
         return $this->parseRows(
             $this->connection->query('SELECT k, v FROM user_config WHERE user = %s', $userId)
         );
+    }
+
+    public function getUserString(string $userId, string $key): ?string
+    {
+        $row = $this->connection->queryFirstRow(
+            'SELECT v FROM user_config WHERE user = %s AND k = %s',
+            $userId,
+            $key
+        );
+        return $row ? (string) $row['v'] : null;
+    }
+
+    public function getUserInt(string $userId, string $key): ?int
+    {
+        $value = $this->getUserString($userId, $key);
+        if ($value === null || filter_var($value, FILTER_VALIDATE_INT) === false) {
+            return null;
+        }
+        return (int) $value;
     }
 
     public function setUserConfig(string $userId, string $key, string $value): void
@@ -51,6 +90,25 @@ class PdoConfigRepository implements ConfigRepositoryInterface
         return $this->parseRows(
             $this->connection->query('SELECT k, v FROM limit_config WHERE limit_id = %i', $limitId)
         );
+    }
+
+    public function getLimitString(int $limitId, string $key): ?string
+    {
+        $row = $this->connection->queryFirstRow(
+            'SELECT v FROM limit_config WHERE limit_id = %i AND k = %s',
+            $limitId,
+            $key
+        );
+        return $row ? (string) $row['v'] : null;
+    }
+
+    public function getLimitInt(int $limitId, string $key): ?int
+    {
+        $value = $this->getLimitString($limitId, $key);
+        if ($value === null || filter_var($value, FILTER_VALIDATE_INT) === false) {
+            return null;
+        }
+        return (int) $value;
     }
 
     public function setLimitConfig(int $limitId, string $key, string $value): void
@@ -74,6 +132,24 @@ class PdoConfigRepository implements ConfigRepositoryInterface
             UNION
             SELECT k, v FROM user_config WHERE user = %s0',
             $userId));
+    }
+
+    public function getClientString(string $userId, string $key): ?string
+    {
+        $value = $this->getUserString($userId, $key);
+        if ($value !== null) {
+            return $value;
+        }
+        return $this->getGlobalString($key);
+    }
+
+    public function getClientInt(string $userId, string $key): ?int
+    {
+        $value = $this->getClientString($userId, $key);
+        if ($value === null || filter_var($value, FILTER_VALIDATE_INT) === false) {
+            return null;
+        }
+        return (int) $value;
     }
 
     public function findAllLimitConfigs(string $userId): array
