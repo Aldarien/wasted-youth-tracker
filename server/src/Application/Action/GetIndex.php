@@ -19,7 +19,7 @@ class GetIndex
     public function __invoke(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         return $this->view->render($response, 'index.twig', array_merge(
-            $this->adminViewService->getPageData(),
+            $this->adminViewService->getPageData()->toArray(),
             ['pruneFromDate' => $this->clock->now()]
         ));
     }

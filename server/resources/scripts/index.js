@@ -41,7 +41,6 @@ function setupTabs() {
     panels.forEach(function(panel) {
       const selected = panel.id === selectedId;
       panel.hidden = !selected;
-      panel.open = selected;
     });
   };
   tabs.forEach(function(tab, index) {
@@ -58,6 +57,17 @@ function setupTabs() {
   });
   const initiallySelected = document.querySelector('.section-tab[aria-selected="true"]') || tabs[0];
   selectTab(initiallySelected);
+
+  document.querySelectorAll('.tab-link').forEach(function(link) {
+    link.addEventListener('click', function(event) {
+      event.preventDefault();
+      const tabId = link.dataset.tab;
+      const tab = document.querySelector('.section-tab[data-tab="' + tabId + '"]');
+      if (tab) {
+        selectTab(tab);
+      }
+    });
+  });
 }
 function setToday(id) {
   const today = new Date();

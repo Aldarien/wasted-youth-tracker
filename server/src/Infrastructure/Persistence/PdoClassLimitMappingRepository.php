@@ -13,7 +13,7 @@ class PdoClassLimitMappingRepository implements ClassLimitMappingRepositoryInter
 
     public function addMapping(int $classId, int $limitId): void
     {
-        $this->connection->insert('mappings', ['class_id' => $classId, 'limit_id' => $limitId]);
+        $this->connection->insertIgnore('mappings', ['class_id' => $classId, 'limit_id' => $limitId]);
     }
 
     public function removeMapping(int $classId, int $limitId): void

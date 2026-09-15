@@ -2,6 +2,8 @@
 
 namespace Zieren\WYT\Application\Service;
 
+use Zieren\WYT\Application\Query\DashboardQueryService;
+use Zieren\WYT\Application\ViewModel\AdminPageView;
 use Zieren\WYT\Domain\Entity\User;
 use Zieren\WYT\Domain\Repository\ClassRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ClassificationRepositoryInterface;
@@ -14,21 +16,12 @@ class AdminViewService
         private readonly UserRepositoryInterface $userRepository,
         private readonly ClassRepositoryInterface $classRepository,
         private readonly ClassificationRepositoryInterface $classificationRepository,
-        private readonly ConfigRepositoryInterface $configRepository
+        private readonly ConfigRepositoryInterface $configRepository,
+        private readonly DashboardQueryService $dashboardQueryService
     ) {
     }
 
-    /**
-     * @return array{
-     *     users: list<\Zieren\WYT\Domain\Entity\User>,
-     *     classes: list<\Zieren\WYT\Domain\Entity\ActivityClass>,
-     *     classifications: array<int, list<\Zieren\WYT\Domain\Entity\Classification>>,
-     *     globalConfig: array<string, string>,
-     *     userConfig: array<string, array<string, string>>,
-     *     limits: array<string, array<int, array<string, mixed>>>
-     * }
-     */
-    public function getPageData(): array
+    public function getPageData(): AdminPageView
     {
         $users = $this->userRepository->findAll();
         $classes = $this->classRepository->findAll();
@@ -37,13 +30,14 @@ class AdminViewService
         $userConfig = $this->configRepository->findAllUserConfigs();
         $limits = $this->configRepository->findAllLimitConfigsForUsers($userIds);
 
-        return [
-            'users' => $users,
-            'classes' => $classes,
-            'classifications' => $classifications,
-            'globalConfig' => $this->configRepository->getGlobalConfig(),
-            'userConfig' => $userConfig,
-            'limits' => $limits,
-        ];
+        return new AdminPageView(
+            $users,
+            $classes,
+            $classifications,
+            $this->configRepository->getGlobalConfig(),
+            $userConfig,
+            $limits,
+            $this->dashboardQueryService->getView($users)
+        );
     }
 }
