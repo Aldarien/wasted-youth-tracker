@@ -2,10 +2,11 @@
 
 namespace Zieren\WYT\Application\Service;
 
+use Zieren\WYT\Application\Service\Contract\MappingManagementServiceInterface;
 use Zieren\WYT\Domain\Repository\ClassLimitMappingRepositoryInterface;
 use Zieren\WYT\Domain\Repository\UserRepositoryInterface;
 
-class MappingManagementService
+class MappingManagementService implements MappingManagementServiceInterface
 {
     public function __construct(
         private readonly ClassLimitMappingRepositoryInterface $mappingRepository,

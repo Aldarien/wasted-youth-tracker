@@ -62,14 +62,35 @@ class WastedBehaviorTest extends IntegrationTestCase
             $this->configRepository,
             new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
         );
+        $dispatcher = $this->createEventDispatcher();
         $this->userService = new UserManagementService(
             $userRepository,
             $this->limitRepository,
-            $this->mappingRepository,
-            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection),
+            $this->configRepository,
+            $dispatcher
         );
 
         $this->totalLimitId = $this->userService->addUser('u1');
+    }
+
+    private function createEventDispatcher(): \Zieren\WYT\Infrastructure\Event\InMemoryEventDispatcher
+    {
+        $dispatcher = new \Zieren\WYT\Infrastructure\Event\InMemoryEventDispatcher();
+        $userRepository = new PdoUserRepository($this->connection);
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\UserCreated::class,
+            new \Zieren\WYT\Application\Event\MapNewUserToAllClasses($this->mappingRepository)
+        );
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\UserCreated::class,
+            new \Zieren\WYT\Application\Event\ApplyTotalLimitDefaultConfig($this->configRepository)
+        );
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\ClassCreated::class,
+            new \Zieren\WYT\Application\Event\MapNewClassToTotalLimits($userRepository, $this->mappingRepository)
+        );
+        return $dispatcher;
     }
 
     public function testTotalTimeSingleWindowNoLimit(): void
@@ -123,8 +144,8 @@ class WastedBehaviorTest extends IntegrationTestCase
 
         $actual = $this->queryTimeSpentByTitle($fromTime, $toTime);
         $expected = [
-            [$this->dateTimeString(), 5, 'default_class', '(no title)'],
-            [$window1LastSeen, 10, 'default_class', 'window 1'],
+            [$this->dateTimeString(), 5, 'Default', '(no title)'],
+            [$window1LastSeen, 10, 'Default', 'window 1'],
         ];
         $this->assertEqualsCanonicalizing($expected, $actual);
     }
@@ -382,7 +403,13 @@ class WastedBehaviorTest extends IntegrationTestCase
     {
         $configs = $this->configRepository->findAllLimitConfigs('u1');
         $this->assertEquals(
-            [$this->totalLimitId => ['name' => 'Total', 'is_total' => true]],
+            [
+                $this->totalLimitId => [
+                    'name' => 'Total',
+                    'is_total' => true,
+                    'total_limit_minutes_day' => '0',
+                ],
+            ],
             $configs
         );
 
@@ -390,7 +417,11 @@ class WastedBehaviorTest extends IntegrationTestCase
         $this->assertEquals([], $this->configRepository->findAllLimitConfigs('nobody'));
 
         $expected = [
-            $this->totalLimitId => ['name' => 'Total', 'is_total' => true],
+            $this->totalLimitId => [
+                'name' => 'Total',
+                'is_total' => true,
+                'total_limit_minutes_day' => '0',
+            ],
             $limitId1 => ['name' => 'b1', 'is_total' => false],
         ];
         $this->assertEquals($expected, $this->configRepository->findAllLimitConfigs('u1'));

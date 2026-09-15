@@ -9,15 +9,18 @@ use PHPUnit\Framework\TestCase;
 use Slim\Views\Twig;
 use Zieren\WYT\Application\Action\GetIndex;
 use Zieren\WYT\Application\Action\PostIndex;
+use Zieren\WYT\Application\Command\AddClassCommand;
+use Zieren\WYT\Application\Command\AddUserCommand;
+use Zieren\WYT\Application\ValueObject\ClassName;
+use Zieren\WYT\Application\Command\Command;
+use Zieren\WYT\Application\Command\CommandBus;
+use Zieren\WYT\Application\Command\FormCommandFactory;
 use Zieren\WYT\Application\Service\AdminViewService;
-use Zieren\WYT\Application\Service\ClassManagementService;
-use Zieren\WYT\Application\Service\ClassificationManagementService;
-use Zieren\WYT\Application\Service\ConfigManagementService;
-use Zieren\WYT\Application\Service\LimitManagementService;
-use Zieren\WYT\Application\Service\MappingManagementService;
-use Zieren\WYT\Application\Service\OverrideManagementService;
-use Zieren\WYT\Application\Service\PruningService;
-use Zieren\WYT\Application\Service\UserManagementService;
+use Zieren\WYT\Application\ViewModel\AdminPageView;
+use Zieren\WYT\Application\ViewModel\BudgetStatusView;
+use Zieren\WYT\Application\ViewModel\ChildStatusView;
+use Zieren\WYT\Application\ViewModel\DashboardView;
+use Zieren\WYT\Application\ViewModel\SetupProgressView;
 use Zieren\WYT\Domain\Entity\User;
 use Zieren\WYT\Domain\Entity\ActivityClass;
 use Zieren\WYT\Domain\Entity\Classification;
@@ -28,14 +31,27 @@ class AdminViewTest extends TestCase
     public function testIndexRendersTwigView(): void
     {
         $adminView = $this->createStub(AdminViewService::class);
-        $adminView->method('getPageData')->willReturn([
-            'users' => [new User('u1')],
-            'classes' => [new ActivityClass(2, 'Work')],
-            'classifications' => [2 => [new Classification(2, 2, 10, '/mail/i')]],
-            'globalConfig' => [],
-            'userConfig' => [],
-            'limits' => ['u1' => [3 => ['name' => 'Browsing', 'is_total' => false]]],
-        ]);
+        $adminView->method('getPageData')->willReturn(new AdminPageView(
+            [new User('u1')],
+            [new ActivityClass(2, 'Work')],
+            [2 => [new Classification(2, 2, 10, '/mail/i')]],
+            [],
+            [],
+            ['u1' => [3 => ['name' => 'Browsing', 'is_total' => false]]],
+            new DashboardView(
+                new SetupProgressView(true, false, false, false),
+                1,
+                1,
+                0,
+                [],
+                [],
+                [
+                    'u1' => new ChildStatusView(null, '', [
+                        new BudgetStatusView('Browsing', 300, false, false),
+                    ]),
+                ]
+            )
+        ));
         $action = new GetIndex(
             Twig::create(dirname(__DIR__, 2) . '/resources/views'),
             $adminView,
@@ -52,20 +68,16 @@ class AdminViewTest extends TestCase
         $this->assertStringContainsString('Browsing', $body);
     }
 
-    public function testAddUserPostRedirectsAfterHandlingMutation(): void
+    public function testAddUserPostDispatchesCommandAndRedirects(): void
     {
-        $users = $this->createMock(UserManagementService::class);
-        $users->expects($this->once())->method('addUser')->with('u1');
-        $action = new PostIndex(
-            $this->createStub(ConfigManagementService::class),
-            $this->createStub(ClassManagementService::class),
-            $this->createStub(ClassificationManagementService::class),
-            $this->createStub(LimitManagementService::class),
-            $this->createStub(MappingManagementService::class),
-            $this->createStub(OverrideManagementService::class),
-            $this->createStub(PruningService::class),
-            $users
-        );
+        $bus = new class() extends CommandBus {
+            public array $commands = [];
+            public function dispatch(Command $command): void
+            {
+                $this->commands[] = $command;
+            }
+        };
+        $action = new PostIndex($bus, new FormCommandFactory());
 
         $request = (new ServerRequest('POST', '/'))
             ->withParsedBody(['addUser' => 'Add', 'userId' => 'u1']);
@@ -73,22 +85,15 @@ class AdminViewTest extends TestCase
 
         $this->assertSame(303, $response->getStatusCode());
         $this->assertSame('/', $response->getHeaderLine('Location'));
+        $this->assertCount(1, $bus->commands);
+        $this->assertInstanceOf(AddUserCommand::class, $bus->commands[0]);
+        $this->assertSame('u1', $bus->commands[0]->userId);
     }
 
     public function testInvalidPruneDateReturnsBadRequest(): void
     {
-        $pruning = $this->createMock(PruningService::class);
-        $pruning->expects($this->never())->method('prune');
-        $action = new PostIndex(
-            $this->createStub(ConfigManagementService::class),
-            $this->createStub(ClassManagementService::class),
-            $this->createStub(ClassificationManagementService::class),
-            $this->createStub(LimitManagementService::class),
-            $this->createStub(MappingManagementService::class),
-            $this->createStub(OverrideManagementService::class),
-            $pruning,
-            $this->createStub(UserManagementService::class)
-        );
+        $bus = new CommandBus();
+        $action = new PostIndex($bus, new FormCommandFactory());
 
         $request = (new ServerRequest('POST', '/'))
             ->withParsedBody(['prune' => 'DELETE', 'datePrune' => 'invalid']);
@@ -96,41 +101,31 @@ class AdminViewTest extends TestCase
         $this->assertSame(400, $action($request, new Response())->getStatusCode());
     }
 
-    public function testAddClassPostUsesClassManagementService(): void
+    public function testAddClassPostDispatchesCommandAndRedirects(): void
     {
-        $classes = $this->createMock(ClassManagementService::class);
-        $classes->expects($this->once())->method('addClass')->with('School');
-        $action = new PostIndex(
-            $this->createStub(ConfigManagementService::class),
-            $classes,
-            $this->createStub(ClassificationManagementService::class),
-            $this->createStub(LimitManagementService::class),
-            $this->createStub(MappingManagementService::class),
-            $this->createStub(OverrideManagementService::class),
-            $this->createStub(PruningService::class),
-            $this->createStub(UserManagementService::class)
-        );
+        $bus = new class() extends CommandBus {
+            public array $commands = [];
+            public function dispatch(Command $command): void
+            {
+                $this->commands[] = $command;
+            }
+        };
+        $action = new PostIndex($bus, new FormCommandFactory());
 
         $request = (new ServerRequest('POST', '/'))
             ->withParsedBody(['addClass' => 'Add', 'className' => 'School']);
+        $response = $action($request, new Response());
 
-        $this->assertSame(303, $action($request, new Response())->getStatusCode());
+        $this->assertSame(303, $response->getStatusCode());
+        $this->assertCount(1, $bus->commands);
+        $this->assertInstanceOf(AddClassCommand::class, $bus->commands[0]);
+        $this->assertSame('School', $bus->commands[0]->name->value);
     }
 
     public function testInvalidReclassifyDateReturnsBadRequest(): void
     {
-        $classes = $this->createMock(ClassManagementService::class);
-        $classes->expects($this->never())->method('reclassify');
-        $action = new PostIndex(
-            $this->createStub(ConfigManagementService::class),
-            $classes,
-            $this->createStub(ClassificationManagementService::class),
-            $this->createStub(LimitManagementService::class),
-            $this->createStub(MappingManagementService::class),
-            $this->createStub(OverrideManagementService::class),
-            $this->createStub(PruningService::class),
-            $this->createStub(UserManagementService::class)
-        );
+        $bus = new CommandBus();
+        $action = new PostIndex($bus, new FormCommandFactory());
 
         $request = (new ServerRequest('POST', '/'))
             ->withParsedBody(['reclassify' => 'Reclassify', 'reclassifyFrom' => 'invalid']);

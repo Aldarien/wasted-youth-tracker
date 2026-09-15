@@ -2,13 +2,14 @@
 
 namespace Zieren\WYT\Application\Service;
 
+use Zieren\WYT\Application\Service\Contract\OverrideManagementServiceInterface;
 use Zieren\WYT\Domain\Exception\LimitNotOwnedByUserException;
 use Zieren\WYT\Domain\Repository\LimitRepositoryInterface;
 use Zieren\WYT\Domain\Repository\LimitOverlapQueryInterface;
 use Zieren\WYT\Domain\Repository\OverrideRepositoryInterface;
 use Zieren\WYT\Domain\Service\SlotParser;
 
-class OverrideManagementService
+class OverrideManagementService implements OverrideManagementServiceInterface
 {
     public function __construct(
         private readonly OverrideRepositoryInterface $overrideRepository,

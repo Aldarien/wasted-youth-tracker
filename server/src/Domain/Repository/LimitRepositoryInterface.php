@@ -20,4 +20,6 @@ interface LimitRepositoryInterface
     public function findById(int $id): ?Limit;
 
     public function findTotalLimitForUser(string $userId): ?Limit;
+
+    public function isTotalLimit(int $id): bool;
 }

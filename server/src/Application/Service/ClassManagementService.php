@@ -3,23 +3,23 @@
 namespace Zieren\WYT\Application\Service;
 
 use DateTimeImmutable;
+use Zieren\WYT\Application\Event\EventDispatcher;
+use Zieren\WYT\Application\Service\Contract\ClassManagementServiceInterface;
+use Zieren\WYT\Domain\Defaults;
 use Zieren\WYT\Domain\Entity\ActivityClass;
+use Zieren\WYT\Domain\Event\ClassCreated;
 use Zieren\WYT\Domain\Exception\CannotModifyDefaultClassException;
-use Zieren\WYT\Domain\Repository\ClassLimitMappingRepositoryInterface;
 use Zieren\WYT\Domain\Repository\ClassRepositoryInterface;
 use Zieren\WYT\Domain\Repository\TransactionManagerInterface;
-use Zieren\WYT\Domain\Repository\UserRepositoryInterface;
 use Zieren\WYT\Domain\Service\ActivityReclassificationService;
-use Zieren\WYT\Domain\Defaults;
 
-class ClassManagementService
+class ClassManagementService implements ClassManagementServiceInterface
 {
     public function __construct(
         private readonly ClassRepositoryInterface $classRepository,
-        private readonly UserRepositoryInterface $userRepository,
-        private readonly ClassLimitMappingRepositoryInterface $classLimitMappingRepository,
         private readonly TransactionManagerInterface $transactionManager,
-        private readonly ActivityReclassificationService $activityReclassificationService
+        private readonly ActivityReclassificationService $activityReclassificationService,
+        private readonly EventDispatcher $eventDispatcher
     ) {
     }
 
@@ -27,14 +27,7 @@ class ClassManagementService
     {
         return $this->transactionManager->run(function () use ($name): int {
             $classId = $this->classRepository->save(new ActivityClass(0, $name));
-            $mappedLimitIds = $this->classLimitMappingRepository->findLimitIdsByClass($classId);
-            foreach ($this->userRepository->findAll() as $user) {
-                if ($user->totalLimitId !== null
-                    && !in_array($user->totalLimitId, $mappedLimitIds, true)
-                ) {
-                    $this->classLimitMappingRepository->addMapping($classId, $user->totalLimitId);
-                }
-            }
+            $this->eventDispatcher->dispatch(new ClassCreated($classId));
             return $classId;
         });
     }

@@ -19,142 +19,373 @@
         <section class="welcome-panel">
             <div>
                 <p class="eyebrow eyebrow-dark">GETTING STARTED</p>
-                <h2>Build your first protection profile</h2>
-                <p>Follow the panels in order: add a user, create a limit, then add rules that classify activity.</p>
+                <h2>Manage screen time for your children</h2>
+                <p>The Dashboard shows live activity from your children's PCs. Start there, then set up a child, create time budgets, and group window titles into app groups so the right limits apply automatically.</p>
             </div>
             <ol class="setup-steps">
-                <li><span>1</span><strong>Add a user</strong><small>Example: <code>alex</code></small></li>
-                <li><span>2</span><strong>Create a limit</strong><small>Example: <code>School night</code></small></li>
-                <li><span>3</span><strong>Add rules</strong><small>Example: <code>youtube|netflix</code></small></li>
+                <li><span>1</span><strong>Add a child</strong><small>e.g. <code>alex</code></small></li>
+                <li><span>2</span><strong>Create a time budget</strong><small>e.g. <code>Games</code></small></li>
+                <li><span>3</span><strong>Add an app group + title pattern</strong><small>e.g. <code>Games: minecraft|steam</code></small></li>
+                <li><span>4</span><strong>Assign the app group to the budget</strong><small>so time counts against it</small></li>
             </ol>
         </section>
         <nav class="section-tabs" aria-label="Admin sections" role="tablist">
-            <button class="section-tab" id="tab-config" type="button" role="tab" aria-controls="config" aria-selected="false" data-tab="config">Configuration</button>
-            <button class="section-tab" id="tab-users" type="button" role="tab" aria-controls="users" aria-selected="true" data-tab="users">Users</button>
-            <button class="section-tab" id="tab-rules" type="button" role="tab" aria-controls="rules" aria-selected="false" data-tab="rules">Rules</button>
-            <button class="section-tab" id="tab-limits" type="button" role="tab" aria-controls="limits" aria-selected="false" data-tab="limits">Limits</button>
+            <button class="section-tab" id="tab-dashboard" type="button" role="tab" aria-controls="dashboard" aria-selected="true" data-tab="dashboard">Dashboard</button>
+            <button class="section-tab" id="tab-config" type="button" role="tab" aria-controls="config" aria-selected="false" data-tab="config">Settings</button>
+            <button class="section-tab" id="tab-users" type="button" role="tab" aria-controls="users" aria-selected="false" data-tab="users">Children</button>
+            <button class="section-tab" id="tab-rules" type="button" role="tab" aria-controls="rules" aria-selected="false" data-tab="rules">App Groups</button>
+            <button class="section-tab" id="tab-limits" type="button" role="tab" aria-controls="limits" aria-selected="false" data-tab="limits">Time Budgets</button>
             <button class="section-tab" id="tab-advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false" data-tab="advanced">Advanced</button>
         </nav>
-        <details class="workspace-panel compact-panel" id="config">
-        <summary><span><strong>Quick configuration</strong><small>Optional key/value settings</small></span><b>Show section</b></summary>
+        <div class="workspace-panel compact-panel" id="dashboard">
         <div class="panel-content">
-        <p class="help-text">Most installations do not need this on the first visit. Use it when you have a
-            documented key and want to apply it to one user or globally.</p>
-        <h3>Update config</h3>
-        <form method="post" enctype="multipart/form-data">
-        <p>
-            <input type="text" name="configKey" placeholder="key">
-            <input type="text" name="configValue" placeholder="value">
-            <select id="idUsers" name="selectedUser">
+        <header class="panel-header"><strong>Dashboard</strong><small>Overview of your family screen-time setup</small></header>
+        <p class="help-text">This is the home screen. You can see which children are set up, peek at recent window titles sent by their PCs, and spot new apps that still need a rule.</p>
+
+        <section class="dashboard-checklist">
+            <h3>Setup checklist</h3>
+            <ol>
+                <li class="{{ dashboard.setup.hasChildren ? 'done' : '' }}">
+                    <strong>Add a child</strong>
+                    <small>Go to the <em>Children</em> tab and create a short ID for each PC.</small>
+                </li>
+                <li class="{{ dashboard.setup.hasBudget ? 'done' : '' }}">
+                    <strong>Create a time budget</strong>
+                    <small>Go to <em>Time Budgets</em> and add a budget such as <code>Games</code>.</small>
+                </li>
+                <li class="{{ dashboard.setup.hasAppGroup ? 'done' : '' }}">
+                    <strong>Create an app group</strong>
+                    <small>Go to <em>App Groups</em> and add a group such as <code>Games: minecraft|steam</code>.</small>
+                </li>
+                <li class="{{ dashboard.setup.hasMapping ? 'done' : '' }}">
+                    <strong>Assign the app group to a budget</strong>
+                    <small>Map the group to a child's budget so its time counts against it.</small>
+                </li>
+            </ol>
+        </section>
+
+        <h3>Children</h3>
+        {% if users %}
+        <section class="child-cards">
+            {% for user in users %}
+                <div class="child-card">
+                    <h4>{{ user.id }}</h4>
+                    <p class="last-seen">Last seen: {{ dashboard.children[user.id].lastSeen ?? 'never' }}</p>
+                    {% if dashboard.children[user.id].unackedError %}
+                        <p class="client-error"><strong>Client error:</strong> {{ dashboard.children[user.id].unackedError }}</p>
+                    {% endif %}
+                    {% if dashboard.children[user.id].budgets %}
+                        <ul class="budget-list">
+                        {% for budget in dashboard.children[user.id].budgets %}
+                            <li class="budget-status {{ budget.locked ? 'locked' : (budget.noLimit ? 'unlimited' : 'ok') }}">
+                                <span class="budget-name">{{ budget.name }}</span>
+                                <span class="budget-remaining">
+                                    {% if budget.locked %}
+                                        locked
+                                    {% elseif budget.noLimit %}
+                                        no limit
+                                    {% else %}
+                                        {{ (budget.remainingSeconds / 60)|round(0, 'floor') }} min left
+                                    {% endif %}
+                                </span>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="empty">No budgets yet.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </section>
+        {% else %}
+            <p>No children configured yet. <a href="#users" class="tab-link" data-tab="users">Add your first child</a> to get started.</p>
+        {% endif %}
+
+        <h3>Recent window titles (last 24 hours)</h3>
+        <table class="config-table">
+            <thead>
+                <tr><th>Time</th><th>Child</th><th>Group</th><th>Window title</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+            {% for row in dashboard.recentActivity %}
+                <tr>
+                    <td>{{ row.from }}</td>
+                    <td>{{ row.user }}</td>
+                    <td>{{ row.class }}</td>
+                    <td><code>{{ row.title }}</code></td>
+                    <td>
+                        <form method="post" style="display:inline">
+                            <input type="hidden" name="title" value="{{ row.title }}">
+                            <input type="text" name="className" placeholder="new group" required>
+                            <input type="number" name="priority" value="10" required>
+                            <select name="limitId">
+                                <option value="">Optionally assign to budget</option>
+                                {% for limitId, limit in limits[row.user] %}
+                                    <option value="{{ limitId }}">{{ limit.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="submit" name="addRuleFromTitle" value="Create rule">
+                        </form>
+                        <form method="post" style="display:inline">
+                            <select name="classId" required>
+                                <option value="">Assign existing group</option>
+                                {% for class in classes %}
+                                    {% if class.id != 1 %}
+                                        <option value="{{ class.id }}">{{ class.name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <select name="limitId" required>
+                                <option value="">to budget</option>
+                                {% for limitId, limit in limits[row.user] %}
+                                    <option value="{{ limitId }}">{{ limit.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="submit" name="addMapping" value="Assign">
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="5">No activity received yet. Make sure a child PC is running the Wasted client.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>Top unclassified window titles</h3>
+        <p class="help-text">These titles were seen recently but currently fall into the Default group. Create an app group for them so they can be counted against a time budget.</p>
+        <table class="config-table">
+            <thead>
+                <tr><th>Child</th><th>Title</th><th>Total seconds</th><th>Last seen</th></tr>
+            </thead>
+            <tbody>
+            {% for row in dashboard.unclassified %}
+                <tr>
+                    <td>{{ row.user }}</td>
+                    <td><code>{{ row.title }}</code></td>
+                    <td>{{ row.seconds }}</td>
+                    <td>{{ row.lastSeen }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="4">No unclassified titles in the last 24 hours.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        </div>
+
+        <div class="workspace-panel compact-panel" id="config" hidden>
+        <div class="panel-content">
+        <header class="panel-header"><strong>Configuration</strong><small>Global and per-user settings</small></header>
+        <p class="help-text">Only change keys you recognize from the documentation. Most setups work fine with the defaults. Examples: <code>sample_interval_seconds</code>, <code>theme</code>.</p>
+
+        <h3>Global configuration</h3>
+        <p class="help-text">These values apply to every user unless a user-specific value overrides them.</p>
+        <form method="post">
+            <input type="text" name="configKey" placeholder="key" required>
+            <input type="text" name="configValue" placeholder="value" required>
+            <input type="submit" name="setGlobalConfig" value="Set global config"
+                onClick="submitWithUiState(this);">
+        </form>
+        <table class="config-table">
+            <thead>
+                <tr><th>Key</th><th>Value</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+            {% for key, value in globalConfig %}
+                <tr>
+                    <td><code>{{ key }}</code></td>
+                    <td>{{ value }}</td>
+                    <td>
+                        <form method="post" style="display:inline">
+                            <input type="hidden" name="configKey" value="{{ key }}">
+                            <input type="submit" name="clearGlobalConfig" value="Delete"
+                                onclick="return submitWithUiState(this, 'Delete global config key {{ key }}?');">
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="3">No global settings configured.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <h3>User configuration</h3>
+        <p class="help-text">Choose a user, then set a key/value that applies only to them.</p>
+        <form method="post">
+            <select id="idUsers" name="selectedUser" required>
                 {% for user in users %}
                     <option value="{{ user.id }}">{{ user.id }}</option>
                 {% else %}
-                    <option value="">No users configured</option>
+                    <option value="" disabled selected>No users configured</option>
                 {% endfor %}
             </select>
-        </p>
-
-        <p>
-            <input type="submit" name="setUserConfig" value="Set User Config"
+            <input type="text" name="configKey" placeholder="key" required>
+            <input type="text" name="configValue" placeholder="value" required>
+            <input type="submit" name="setUserConfig" value="Set user config"
                 onClick="submitWithUiState(this);">
-            <input type="submit" name="clearUserConfig" value="Clear User Config"
-                onClick="submitWithUiState(this);">
-        </p>
-
-        <p>
-            <input type="submit" name="setGlobalConfig" value="Set Global Config"
-                onClick="submitWithUiState(this);">
-            <input type="submit" name="clearGlobalConfig" value="Clear Global Config"
-                onClick="submitWithUiState(this);">
-        </p>
         </form>
-        </div>
-        </details>
-
-        <details class="workspace-panel" id="users" open>
-        <summary><span><strong>1. Users</strong><small>Who should be managed?</small></span><b>Show section</b></summary>
-        <div class="panel-content">
-        <p class="help-text">Create one user for each person or device profile you want to manage.
-            Use a short, stable identifier such as <code>alex</code> or <code>gaming-pc</code>.</p>
-        <h3>Users</h3>
-        <form method="post" enctype="multipart/form-data">
-        <input type="text" name="userId" required placeholder="id">
-        <input type="submit" name="addUser" value="Add" onClick="submitWithUiState(this);">
-        <input type="submit" name="removeUser" value="Remove"
-            onclick="return submitWithUiState(this, 'Remove user and all their data?');">
-        </form>
-        <ul>
-            {% for user in users %}
-                <li>{{ user.id }}</li>
-            {% else %}
-                <li>No users configured.</li>
+        <table class="config-table">
+            <thead>
+                <tr><th>User</th><th>Key</th><th>Value</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+            {% set hasUserConfig = false %}
+            {% for userId, configs in userConfig %}
+                {% for key, value in configs %}
+                    {% set hasUserConfig = true %}
+                    <tr>
+                        <td>{{ userId }}</td>
+                        <td><code>{{ key }}</code></td>
+                        <td>{{ value }}</td>
+                        <td>
+                            <form method="post" style="display:inline">
+                                <input type="hidden" name="selectedUser" value="{{ userId }}">
+                                <input type="hidden" name="configKey" value="{{ key }}">
+                                <input type="submit" name="clearUserConfig" value="Delete"
+                                    onclick="return submitWithUiState(this, 'Delete user config {{ key }} for {{ userId }}?');">
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
             {% endfor %}
-        </ul>
-
+            {% if not hasUserConfig %}
+                <tr>
+                    <td colspan="4">No per-user settings configured.</td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
         </div>
-        </details>
-        <details class="workspace-panel" id="rules">
-        <summary><span><strong>2. Rules and classifications</strong><small>Group activity by topic or app</small></span><b>Show section</b></summary>
+        </div>
+
+        <div class="workspace-panel" id="users" hidden>
         <div class="panel-content">
-        <p class="help-text">Add a class, then match activity titles with a pattern. For example,
-            <code>youtube|netflix</code> matches either title. Lower priority numbers are checked first.</p>
-        <h3>Classes and classifications</h3>
-        <form method="post">
-            <input type="text" name="className" required placeholder="class name">
-            <input type="submit" name="addClass" value="Add class">
+        <header class="panel-header"><strong>Children</strong><small>Add or remove a child or device</small></header>
+        <p class="help-text">Create one short, stable ID for each child or PC you want to manage,
+            e.g. <code>alex</code> or <code>gaming-pc</code>. Removing a child deletes all of their activity, budgets, and settings.</p>
+        <h3>Children</h3>
+        <form method="post" enctype="multipart/form-data" class="inline-form">
+            <input type="text" name="userId" required placeholder="Short ID, e.g. alex">
+            <input type="submit" name="addUser" value="Add child" onClick="submitWithUiState(this);">
         </form>
-        {% for class in classes %}
-            <section>
-                <h4>{{ class.name }} ({{ class.id }})</h4>
-                {% if class.id != 1 %}
-                    <form method="post">
-                        <input type="hidden" name="classId" value="{{ class.id }}">
-                        <input type="text" name="className" value="{{ class.name }}" required>
-                        <input type="submit" name="renameClass" value="Rename">
-                        <input type="submit" name="removeClass" value="Delete"
-                            onclick="return submitWithUiState(this, 'Delete class?');">
-                    </form>
-                {% endif %}
-                <ul>
-                    {% for classification in classifications[class.id] %}
-                        <li>
-                            #{{ classification.priority }} {{ classification.regex }}
-                            {% if classification.id != 1 %}
-                                <form method="post" style="display:inline">
-                                    <input type="hidden" name="classificationId" value="{{ classification.id }}">
-                                    <input type="number" name="priority" value="{{ classification.priority }}" required>
-                                    <input type="text" name="regex" value="{{ classification.regex }}" required>
-                                    <input type="submit" name="changeClassification" value="Save">
-                                    <input type="submit" name="removeClassification" value="Delete">
-                                </form>
-                            {% endif %}
-                        </li>
-                    {% else %}
-                        <li>No classifications configured.</li>
-                    {% endfor %}
-                </ul>
-                <form method="post">
-                    <input type="hidden" name="classId" value="{{ class.id }}">
-                    <input type="number" name="priority" required placeholder="priority">
-                    <input type="text" name="regex" required placeholder="title pattern">
-                    <input type="submit" name="addClassification" value="Add classification">
-                </form>
-                {% for mappingUser in users %}
-                    {% for mappingLimitId, mappingLimit in limits[mappingUser.id] %}
+        {% if users %}
+            <section class="child-list">
+                {% for user in users %}
+                    <div class="child-list-item">
+                        <strong>{{ user.id }}</strong>
                         <form method="post" style="display:inline">
-                            <input type="hidden" name="classId" value="{{ class.id }}">
-                            <input type="hidden" name="limitId" value="{{ mappingLimitId }}">
-                            <input type="submit" name="addMapping"
-                                value="Map {{ mappingUser.id }}: {{ mappingLimit.name }}">
-                            <input type="submit" name="removeMapping" value="Unmap">
+                            <input type="hidden" name="userId" value="{{ user.id }}">
+                            <input type="submit" name="removeUser" value="Remove"
+                                onclick="return submitWithUiState(this, 'Remove child {{ user.id }} and all their data?');">
                         </form>
-                    {% endfor %}
+                    </div>
                 {% endfor %}
             </section>
         {% else %}
-            <p>No classes configured.</p>
-        {% endfor %}
-        <form method="post">
+            <p class="empty-state">No children added yet. Add one above so you can create time budgets and app groups for them.</p>
+        {% endif %}
+
+        </div>
+        </div>
+        <div class="workspace-panel" id="rules" hidden>
+        <div class="panel-content">
+        <header class="panel-header"><strong>App Groups</strong><small>Group window titles into buckets</small></header>
+        <p class="help-text">An <em>app group</em> is a bucket (e.g., <code>Games</code>). A <em>title pattern</em> is a regular expression that puts window titles into that bucket.
+            Lower priority numbers are checked first; the Default group catches everything else. Example pattern: <code>minecraft|steam|epic</code>.
+            After adding an app group, assign it to a child's time budget so its activity counts against the budget.</p>
+        <h3>App groups and title patterns</h3>
+        {% if users %}
+            <form method="post" class="inline-form">
+                <input type="text" name="className" required placeholder="New app group name">
+                <input type="submit" name="addClass" value="Add app group">
+            </form>
+            {% if classes %}
+                <section class="app-group-cards">
+                {% for class in classes %}
+                    <div class="app-group-card {{ class.id == 1 ? 'default-group' : '' }}">
+                        <header>
+                            {% if class.id == 1 %}
+                                <h4>Default (catch-all)</h4>
+                            {% else %}
+                                <h4>{{ class.name }}</h4>
+                                <form method="post" style="display:inline">
+                                    <input type="hidden" name="classId" value="{{ class.id }}">
+                                    <input type="text" name="className" value="{{ class.name }}" required>
+                                    <input type="submit" name="renameClass" value="Rename">
+                                    <input type="submit" name="removeClass" value="Delete"
+                                        onclick="return submitWithUiState(this, 'Delete app group {{ class.name }}?');">
+                                </form>
+                            {% endif %}
+                        </header>
+
+                        {% if class.id == 1 %}
+                            <p class="help-text">The Default group catches every window title that does not match another pattern.</p>
+                        {% else %}
+                            <table class="config-table compact">
+                                <thead>
+                                    <tr><th>Priority</th><th>Pattern</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                {% for classification in classifications[class.id] %}
+                                    <tr>
+                                        <td>{{ classification.priority }}</td>
+                                        <td><code>{{ classification.regex }}</code></td>
+                                        <td>
+                                            <form method="post" style="display:inline">
+                                                <input type="hidden" name="classificationId" value="{{ classification.id }}">
+                                                <input type="number" name="priority" value="{{ classification.priority }}" required>
+                                                <input type="text" name="regex" value="{{ classification.regex }}" required>
+                                                <input type="submit" name="changeClassification" value="Save">
+                                                <input type="submit" name="removeClassification" value="Delete">
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="3">No patterns yet.</td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                            <form method="post" class="inline-form">
+                                <input type="hidden" name="classId" value="{{ class.id }}">
+                                <input type="number" name="priority" required placeholder="priority">
+                                <input type="text" name="regex" required placeholder="title pattern (regex)">
+                                <input type="submit" name="addClassification" value="Add pattern">
+                            </form>
+                        {% endif %}
+
+                        <div class="mapping-list">
+                            <strong>Assign to time budgets</strong>
+                            {% for mappingUser in users %}
+                                {% for mappingLimitId, mappingLimit in limits[mappingUser.id] %}
+                                    <form method="post" style="display:inline">
+                                        <input type="hidden" name="classId" value="{{ class.id }}">
+                                        <input type="hidden" name="limitId" value="{{ mappingLimitId }}">
+                                        <span class="mapping-target">{{ mappingUser.id }}: {{ mappingLimit.name }}</span>
+                                        <input type="submit" name="addMapping" value="Map">
+                                        <input type="submit" name="removeMapping" value="Unmap">
+                                    </form>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+                </section>
+            {% else %}
+                <p class="empty-state">No app groups yet. Create one above, or use the <em>Create rule</em> button on a recent window title in the Dashboard.</p>
+            {% endif %}
+        {% else %}
+            <p class="empty-state">No children configured yet. <a href="#users" class="tab-link" data-tab="users">Add a child</a> before creating app groups.</p>
+        {% endif %}
+
+        <form method="post" class="inline-form" style="margin-top: 24px;">
             <label>Reclassify activity from
                 <input type="date" name="reclassifyFrom" required>
             </label>
@@ -162,88 +393,112 @@
         </form>
 
         </div>
-        </details>
-        <details class="workspace-panel" id="limits">
-        <summary><span><strong>3. Limits and overrides</strong><small>Set time or usage rules per user</small></span><b>Show section</b></summary>
+        </div>
+        <div class="workspace-panel" id="limits" hidden>
         <div class="panel-content">
-        <p class="help-text">Create a limit for each user, then configure its settings. Use an override
-            to temporarily allow or block access on a specific date.</p>
-        <h3>Limits and mappings</h3>
-        {% for user in users %}
-            <section>
-                <h4>{{ user.id }}</h4>
-                <form method="post">
-                    <input type="hidden" name="userId" value="{{ user.id }}">
-                    <input type="text" name="limitName" required placeholder="limit name">
-                    <input type="submit" name="addLimit" value="Add limit">
-                </form>
-                {% for limitId, limit in limits[user.id] %}
-                    <form method="post">
-                        <input type="hidden" name="userId" value="{{ user.id }}">
-                        <input type="hidden" name="limitId" value="{{ limitId }}">
-                        <strong>{{ limit.name }}</strong>
-                        {% if not limit.is_total %}
-                            <input type="text" name="limitName" value="{{ limit.name }}" required>
-                            <input type="submit" name="renameLimit" value="Rename">
-                            <input type="submit" name="removeLimit" value="Delete"
-                                onclick="return submitWithUiState(this, 'Delete limit?');">
-                        {% endif %}
-                    </form>
-                    <ul>
-                        {% for key, value in limit %}
-                            {% if key != 'name' and key != 'is_total' %}
-                                <li>{{ key }} = {{ value }}</li>
-                            {% endif %}
-                        {% else %}
-                            <li>No limit settings configured.</li>
+        <header class="panel-header"><strong>Time Budgets</strong><small>Daily/weekly allowances and one-off overrides</small></header>
+        <p class="help-text">Every child starts with a built-in <strong>Total</strong> time budget. Add extra budgets (e.g., <code>Games</code>, <code>Homework</code>) and configure them with settings like
+            <code>minutes_day</code> or <code>times</code>. Use overrides to temporarily allow or block access on a specific date.</p>
+        <h3>Time budgets</h3>
+        {% if users %}
+            <section class="child-budgets-list">
+            {% for user in users %}
+                <div class="child-budgets-card">
+                    <header>
+                        <h4>{{ user.id }}</h4>
+                        <form method="post" style="display:inline">
+                            <input type="hidden" name="userId" value="{{ user.id }}">
+                            <input type="text" name="limitName" required placeholder="New budget name">
+                            <input type="submit" name="addLimit" value="Add budget">
+                        </form>
+                    </header>
+                    {% if limits[user.id] %}
+                        <div class="budget-card-list">
+                        {% for limitId, limit in limits[user.id] %}
+                            <div class="budget-card {{ limit.is_total ? 'total-budget' : '' }}">
+                                <form method="post" class="budget-title-form">
+                                    <input type="hidden" name="userId" value="{{ user.id }}">
+                                    <input type="hidden" name="limitId" value="{{ limitId }}">
+                                    {% if limit.is_total %}
+                                        <strong class="budget-name">{{ limit.name }} (Total)</strong>
+                                    {% else %}
+                                        <input type="text" name="limitName" value="{{ limit.name }}" required>
+                                        <input type="submit" name="renameLimit" value="Rename">
+                                        <input type="submit" name="removeLimit" value="Delete"
+                                            onclick="return submitWithUiState(this, 'Delete budget {{ limit.name }}?');">
+                                    {% endif %}
+                                </form>
+
+                                <table class="config-table compact">
+                                    <thead>
+                                        <tr><th>Setting</th><th>Value</th><th></th></tr>
+                                    </thead>
+                                    <tbody>
+                                    {% set hasSettings = false %}
+                                    {% for key, value in limit %}
+                                        {% if key != 'name' and key != 'is_total' %}
+                                            {% set hasSettings = true %}
+                                            <tr>
+                                                <td><code>{{ key }}</code></td>
+                                                <td>{{ value }}</td>
+                                                <td>
+                                                    <form method="post" style="display:inline">
+                                                        <input type="hidden" name="userId" value="{{ user.id }}">
+                                                        <input type="hidden" name="limitId" value="{{ limitId }}">
+                                                        <input type="hidden" name="configKey" value="{{ key }}">
+                                                        <input type="submit" name="clearLimitConfig" value="Delete"
+                                                            onclick="return submitWithUiState(this, 'Delete setting {{ key }}?');">
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if not hasSettings %}
+                                        <tr>
+                                            <td colspan="3">No settings yet. Add one below to control the budget.</td>
+                                        </tr>
+                                    {% endif %}
+                                    </tbody>
+                                </table>
+
+                                <form method="post" class="inline-form">
+                                    <input type="hidden" name="userId" value="{{ user.id }}">
+                                    <input type="hidden" name="limitId" value="{{ limitId }}">
+                                    <input type="text" name="configKey" required placeholder="setting (e.g. minutes_day)">
+                                    <input type="text" name="configValue" required placeholder="value">
+                                    <input type="submit" name="setLimitConfig" value="Set setting">
+                                </form>
+
+                                <form method="post" class="inline-form override-form">
+                                    <input type="hidden" name="userId" value="{{ user.id }}">
+                                    <input type="hidden" name="limitId" value="{{ limitId }}">
+                                    <input type="date" name="overrideDate" required>
+                                    <input type="number" name="minutes" min="0" placeholder="minutes">
+                                    <input type="text" name="slots" placeholder="slots (e.g. 14:00-16:00)">
+                                    <input type="submit" name="setOverrideMinutes" value="Set minutes">
+                                    <input type="submit" name="setOverrideSlots" value="Set slots">
+                                    <input type="submit" name="unlockOverride" value="Unlock">
+                                    <input type="submit" name="clearOverrides" value="Clear">
+                                </form>
+                            </div>
                         {% endfor %}
-                    </ul>
-                    <form method="post">
-                        <input type="hidden" name="userId" value="{{ user.id }}">
-                        <input type="hidden" name="limitId" value="{{ limitId }}">
-                        <input type="text" name="configKey" required placeholder="setting">
-                        <input type="text" name="configValue" required placeholder="value">
-                        <input type="submit" name="setLimitConfig" value="Set limit setting">
-                    </form>
-                    <form method="post">
-                        <input type="hidden" name="userId" value="{{ user.id }}">
-                        <input type="hidden" name="limitId" value="{{ limitId }}">
-                        <input type="text" name="configKey" required placeholder="setting to clear">
-                        <input type="submit" name="clearLimitConfig" value="Clear limit setting">
-                    </form>
-                    <form method="post">
-                        <input type="hidden" name="userId" value="{{ user.id }}">
-                        <input type="hidden" name="limitId" value="{{ limitId }}">
-                        <input type="date" name="overrideDate" required>
-                        <input type="number" name="minutes" min="0" placeholder="minutes">
-                        <input type="text" name="slots" placeholder="slots">
-                        <input type="submit" name="setOverrideMinutes" value="Set minutes">
-                        <input type="submit" name="setOverrideSlots" value="Set slots">
-                        <input type="submit" name="unlockOverride" value="Unlock">
-                        <input type="submit" name="clearOverrides" value="Clear">
-                    </form>
-                {% else %}
-                    <p>No limits configured.</p>
-                {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="empty">No budgets yet. Add one above.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
             </section>
-        {% endfor %}
+        {% else %}
+            <p class="empty-state">No children configured yet. <a href="#users" class="tab-link" data-tab="users">Add a child</a> before creating time budgets.</p>
+        {% endif %}
 
         </div>
-        </details>
-        <details class="workspace-panel" id="advanced">
-        <summary><span><strong>4. Advanced configuration</strong><small>Fine-tune settings and maintenance</small></span><b>Show section</b></summary>
+        </div>
+        <div class="workspace-panel" id="advanced" hidden>
         <div class="panel-content">
-        <p class="help-text">These tools are optional. Use configuration keys from your deployment documentation,
-            and take care with database cleanup because it affects all users.</p>
-        <h3>Global configuration</h3>
-        <ul>
-            {% for key, value in globalConfig %}
-                <li>{{ key }} = {{ value }}</li>
-            {% else %}
-                <li>No global settings configured.</li>
-            {% endfor %}
-        </ul>
-
+        <header class="panel-header"><strong>4. Advanced</strong><small>Database cleanup</small></header>
+        <p class="help-text">The prune tool permanently deletes old activity and server logs for everyone. Use it with care.</p>
         <h3>Manage Database</h3>
         <form method="post">
             Delete activity (of all users!) and server logs older than
@@ -252,7 +507,7 @@
                 onclick="return submitWithUiState(this, 'Delete activity and server logs?');" />
         </form>
         </div>
-        </details>
+        </div>
         <p class="page-note">
             &copy; 2021-2023 <a href="https://zieren.de">J&ouml;rg Zieren</a>
             (<a href="https://github.com/zieren">github</a>), GNU GPL v3.

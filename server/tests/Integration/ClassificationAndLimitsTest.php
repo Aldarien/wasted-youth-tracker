@@ -34,17 +34,40 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
         $this->mappingRepository = new PdoClassLimitMappingRepository($this->connection);
         $this->classRepository = new PdoClassRepository($this->connection);
         $this->classificationRepository = new PdoClassificationRepository($this->connection);
+        $dispatcher = $this->createEventDispatcher();
         $this->userService = new UserManagementService(
             new PdoUserRepository($this->connection),
             $this->limitRepository,
-            $this->mappingRepository,
-            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection),
+            new PdoConfigRepository($this->connection),
+            $dispatcher
         );
         $this->classificationService = new ClassificationService(
             $this->classificationRepository,
             $this->mappingRepository
         );
         $this->totalLimitId = $this->userService->addUser('u1');
+    }
+
+    private function createEventDispatcher(): \Zieren\WYT\Infrastructure\Event\InMemoryEventDispatcher
+    {
+        $dispatcher = new \Zieren\WYT\Infrastructure\Event\InMemoryEventDispatcher();
+        $configRepository = new PdoConfigRepository($this->connection);
+        $userRepository = new PdoUserRepository($this->connection);
+
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\UserCreated::class,
+            new \Zieren\WYT\Application\Event\MapNewUserToAllClasses($this->mappingRepository)
+        );
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\UserCreated::class,
+            new \Zieren\WYT\Application\Event\ApplyTotalLimitDefaultConfig($configRepository)
+        );
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\ClassCreated::class,
+            new \Zieren\WYT\Application\Event\MapNewClassToTotalLimits($userRepository, $this->mappingRepository)
+        );
+        return $dispatcher;
     }
 
     public function testSetUpLimitsAndClassify(): void
@@ -108,7 +131,13 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
     {
         $configRepository = new PdoConfigRepository($this->connection);
         $all = $configRepository->findAllLimitConfigs('u1');
-        $expected = [$this->totalLimitId => ['name' => Defaults::TOTAL_LIMIT_NAME, 'is_total' => true]];
+        $expected = [
+            $this->totalLimitId => [
+                'name' => Defaults::TOTAL_LIMIT_NAME,
+                'is_total' => true,
+                'total_limit_minutes_day' => '0',
+            ],
+        ];
         $this->assertEquals($expected, $all);
 
         $limitId = $this->limitRepository->save(new Limit(0, 'u1', 'b'));
@@ -124,6 +153,17 @@ class ClassificationAndLimitsTest extends IntegrationTestCase
         $all = $configRepository->findAllLimitConfigs('u1');
         $expected[$limitId]['foo'] = 'bar';
         $this->assertEquals($expected, $all);
+    }
+
+    public function testAddMappingIsIdempotent(): void
+    {
+        $classId = $this->classRepository->save(new ActivityClass(0, 'c1'));
+        $limitId = $this->limitRepository->save(new Limit(0, 'u1', 'b1'));
+
+        $this->mappingRepository->addMapping($classId, $limitId);
+        $this->mappingRepository->addMapping($classId, $limitId);
+
+        $this->assertSame([$limitId], $this->mappingRepository->findLimitIdsByClass($classId));
     }
 
     /**

@@ -2,9 +2,10 @@
 
 namespace Zieren\WYT\Application\Service;
 
+use Zieren\WYT\Application\Service\Contract\ConfigManagementServiceInterface;
 use Zieren\WYT\Domain\Repository\ConfigRepositoryInterface;
 
-class ConfigManagementService
+class ConfigManagementService implements ConfigManagementServiceInterface
 {
     public function __construct(
         private readonly ConfigRepositoryInterface $configRepository

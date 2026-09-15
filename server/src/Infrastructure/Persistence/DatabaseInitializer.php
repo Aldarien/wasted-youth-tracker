@@ -131,6 +131,14 @@ class DatabaseInitializer
             'id' => Defaults::DEFAULT_CLASS_ID,
             'name' => Defaults::DEFAULT_CLASS_NAME,
         ]);
+        $this->connection->insertIgnore('global_config', [
+            'k' => Defaults::TOTAL_LIMIT_NAME_CONFIG_KEY,
+            'v' => Defaults::TOTAL_LIMIT_NAME,
+        ]);
+        $this->connection->insertIgnore('global_config', [
+            'k' => Defaults::TOTAL_LIMIT_MINUTES_DAY_CONFIG_KEY,
+            'v' => Defaults::DEFAULT_TOTAL_LIMIT_MINUTES_DAY,
+        ]);
         $this->connection->insertIgnore('classification', [
             'id' => Defaults::DEFAULT_CLASSIFICATION_ID,
             'class_id' => Defaults::DEFAULT_CLASS_ID,

@@ -120,7 +120,6 @@ class RecordActivityService
 
     private function getMaxInterval(string $userId): int
     {
-        $clientConfig = $this->configRepository->getClientConfig($userId);
-        return ((int) ($clientConfig['sample_interval_seconds'] ?? 15)) + 30;
+        return ($this->configRepository->getClientInt($userId, 'sample_interval_seconds') ?? 15) + 30;
     }
 }
