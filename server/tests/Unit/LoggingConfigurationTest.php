@@ -6,6 +6,7 @@ use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Zieren\WYT\Infrastructure\Config\EnvironmentConfig;
 
 final class LoggingConfigurationTest extends TestCase
 {
@@ -59,7 +60,7 @@ final class LoggingConfigurationTest extends TestCase
         $this->setEnvironment(['LOG_LEVEL' => 'not-a-level']);
 
         $this->expectException(RuntimeException::class);
-        ($this->definitions()[LoggerInterface::class])();
+        ($this->definitions()[LoggerInterface::class])(new EnvironmentConfig());
     }
 
     public function testRejectsInvalidMaximumFileCount(): void
@@ -67,7 +68,7 @@ final class LoggingConfigurationTest extends TestCase
         $this->setEnvironment(['LOG_MAX_FILES' => '0']);
 
         $this->expectException(RuntimeException::class);
-        ($this->definitions()[LoggerInterface::class])();
+        ($this->definitions()[LoggerInterface::class])(new EnvironmentConfig());
     }
 
     public function testRejectsInvalidStderrFlag(): void
@@ -75,7 +76,7 @@ final class LoggingConfigurationTest extends TestCase
         $this->setEnvironment(['LOG_STDERR' => 'sometimes']);
 
         $this->expectException(RuntimeException::class);
-        ($this->definitions()[LoggerInterface::class])();
+        ($this->definitions()[LoggerInterface::class])(new EnvironmentConfig());
     }
 
     public function testRejectsInvalidSlowRequestThreshold(): void
@@ -83,12 +84,12 @@ final class LoggingConfigurationTest extends TestCase
         $this->setEnvironment(['LOG_SLOW_REQUEST_MS' => '0']);
 
         $this->expectException(RuntimeException::class);
-        ($this->definitions()['http.slow_request_ms'])();
+        ($this->definitions()['http.slow_request_ms'])(new EnvironmentConfig());
     }
 
     private function logger(): LoggerInterface
     {
-        return ($this->definitions()[LoggerInterface::class])();
+        return ($this->definitions()[LoggerInterface::class])(new EnvironmentConfig());
     }
 
     /**

@@ -21,6 +21,7 @@ class App extends SlimApp
         App::checkRequirements();
 
         $builder = new ContainerBuilder();
+        $builder->useAutowiring(true);
 
         $folders = array_intersect_key($customFolderNames, array_flip(['definitions', 'autowires']));
 
@@ -40,6 +41,8 @@ class App extends SlimApp
         } catch (Throwable $exception) {
             throw new RuntimeException('Failed to create application: [' . $exception::class . '] ' . $exception->getMessage());
         }
+
+        $app->getContainer()->get(\Zieren\WYT\Infrastructure\Health\StartupHealthCheck::class)->validate();
 
         $app->addBodyParsingMiddleware();
         $app->add(new SecurityHeadersMiddleware());
