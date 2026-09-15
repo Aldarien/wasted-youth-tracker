@@ -92,11 +92,29 @@ class RxServiceIntegrationTest extends IntegrationTestCase
     private function addUser(): void
     {
         $configRepository = new PdoConfigRepository($this->connection);
+        $mappingRepository = new PdoClassLimitMappingRepository($this->connection);
+        $userRepository = new PdoUserRepository($this->connection);
+
+        $dispatcher = new \Zieren\WYT\Infrastructure\Event\InMemoryEventDispatcher();
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\UserCreated::class,
+            new \Zieren\WYT\Application\Event\MapNewUserToAllClasses($mappingRepository)
+        );
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\UserCreated::class,
+            new \Zieren\WYT\Application\Event\ApplyTotalLimitDefaultConfig($configRepository)
+        );
+        $dispatcher->listen(
+            \Zieren\WYT\Domain\Event\ClassCreated::class,
+            new \Zieren\WYT\Application\Event\MapNewClassToTotalLimits($userRepository, $mappingRepository)
+        );
+
         $userService = new UserManagementService(
-            new PdoUserRepository($this->connection),
+            $userRepository,
             new PdoLimitRepository($this->connection),
-            new PdoClassLimitMappingRepository($this->connection),
-            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection)
+            new \Zieren\WYT\Infrastructure\Persistence\PdoTransactionManager($this->connection),
+            $configRepository,
+            $dispatcher
         );
 
         $limitId = $userService->addUser('u1');
