@@ -2,18 +2,17 @@
 
 namespace Zieren\WYT\Application\Service;
 
+use Zieren\WYT\Application\Service\Contract\LimitManagementServiceInterface;
 use Zieren\WYT\Domain\Entity\Limit;
 use Zieren\WYT\Domain\Exception\LimitNotOwnedByUserException;
 use Zieren\WYT\Domain\Repository\ConfigRepositoryInterface;
 use Zieren\WYT\Domain\Repository\LimitRepositoryInterface;
-use Zieren\WYT\Domain\Repository\UserRepositoryInterface;
 use Zieren\WYT\Domain\Service\SlotParser;
 
-class LimitManagementService
+class LimitManagementService implements LimitManagementServiceInterface
 {
     public function __construct(
         private readonly LimitRepositoryInterface $limitRepository,
-        private readonly UserRepositoryInterface $userRepository,
         private readonly ConfigRepositoryInterface $configRepository,
         private readonly SlotParser $slotParser
     ) {
@@ -67,11 +66,6 @@ class LimitManagementService
 
     private function isTotalLimit(int $limitId): bool
     {
-        foreach ($this->userRepository->findAll() as $user) {
-            if ($user->totalLimitId === $limitId) {
-                return true;
-            }
-        }
-        return false;
+        return $this->limitRepository->isTotalLimit($limitId);
     }
 }

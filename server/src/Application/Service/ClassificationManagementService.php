@@ -2,13 +2,14 @@
 
 namespace Zieren\WYT\Application\Service;
 
+use Zieren\WYT\Application\Service\Contract\ClassificationManagementServiceInterface;
 use Zieren\WYT\Domain\Defaults;
 use Zieren\WYT\Domain\Entity\Classification;
 use Zieren\WYT\Domain\Exception\CannotModifyDefaultClassificationException;
 use Zieren\WYT\Domain\Exception\ClassificationNotFoundException;
 use Zieren\WYT\Domain\Repository\ClassificationRepositoryInterface;
 
-class ClassificationManagementService
+class ClassificationManagementService implements ClassificationManagementServiceInterface
 {
     public function __construct(
         private readonly ClassificationRepositoryInterface $classificationRepository
